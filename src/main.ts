@@ -1112,23 +1112,23 @@ class MinesweeperApp {
   private renderScoreboard(): void {
     this.mineCounter.textContent = formatCounter(countRemainingMinesEstimate(this.game));
     this.renderClock();
-    this.faceLabel.classList.remove("is-eye");
+    this.faceLabel.className = "face-button-label";
+    this.faceLabel.textContent = "";
 
     if (this.game.status === "won") {
-      this.faceLabel.textContent = "8)";
+      this.faceLabel.classList.add("is-face-asset", "face-win");
       this.faceButton.setAttribute("aria-label", translate(this.settings.language, "controls.restart"));
     } else if (this.game.status === "lost") {
-      this.faceLabel.textContent = "X(";
+      this.faceLabel.classList.add("is-face-asset", "face-lose");
       this.faceButton.setAttribute("aria-label", translate(this.settings.language, "controls.restart"));
     } else if (this.settings.trainer.enabled) {
-      this.faceLabel.textContent = "";
       this.faceLabel.classList.add("is-eye");
       this.faceButton.setAttribute("aria-label", translate(this.settings.language, "controls.showTrainerOverlay"));
     } else if (this.pointerSession && !this.pointerSession.dragging) {
-      this.faceLabel.textContent = ":O";
+      this.faceLabel.classList.add("is-face-asset", "face-press");
       this.faceButton.setAttribute("aria-label", translate(this.settings.language, "controls.restart"));
     } else {
-      this.faceLabel.textContent = ":)";
+      this.faceLabel.classList.add("is-face-asset", "face-play");
       this.faceButton.setAttribute("aria-label", translate(this.settings.language, "controls.restart"));
     }
   }

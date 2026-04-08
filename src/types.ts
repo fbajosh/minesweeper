@@ -1,4 +1,4 @@
-export type ThemeName = "xp-blue" | "xp-olive" | "xp-silver" | "mogged";
+export type ThemeName = "xp-blue" | "xp-olive" | "xp-silver" | "astronomer" | "mogged";
 export type LanguageCode = "en-US" | "es-ES";
 export type DifficultyLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 export type DifficultyKind = "preset" | "custom";

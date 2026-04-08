@@ -23,7 +23,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       statistics: "Statistics",
       enableTrainer: "Enable Trainer",
       overlayMode: "Overlay",
-      settings: "Interaction Settings...",
+      settings: "Settings...",
       theme: "Theme",
       language: "Language",
       controls: "Controls",
@@ -51,6 +51,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       "xp-blue": "Blue",
       "xp-olive": "Olive Green",
       "xp-silver": "Silver",
+      astronomer: "Astronomer",
       mogged: "Mogged",
     },
     language: {
@@ -111,7 +112,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
     },
     dialogs: {
       customTitle: "Custom Field",
-      settingsTitle: "Interaction Settings",
+      settingsTitle: "Settings",
       bestTimesTitle: "Best Times",
       statisticsTitle: "Statistics",
       controlsTitle: "Controls",
@@ -125,7 +126,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
     },
     help: {
       controls:
-        "Desktop: left-click opens, right-click flags, double-click or Shift+click chords. Touch: tap and hold to flag. Gesture timing is configurable in Training > Interaction Settings.",
+        "Desktop: left-click opens, right-click flags, double-click or Shift+click chords. Touch: tap and hold to flag. Gesture timing is configurable in Training > Settings.",
       trainer:
         "Trainer mode shades hidden cells by mine probability. Color is the default overlay, with percent and dot modes available from the Training menu.",
     },
@@ -147,7 +148,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       statistics: "Estadisticas",
       enableTrainer: "Activar entrenador",
       overlayMode: "Superposicion",
-      settings: "Ajustes de interaccion...",
+      settings: "Ajustes...",
       theme: "Tema",
       language: "Idioma",
       controls: "Controles",
@@ -175,6 +176,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       "xp-blue": "Azul",
       "xp-olive": "Verde oliva",
       "xp-silver": "Plata",
+      astronomer: "Astronomer",
       mogged: "Mogged",
     },
     language: {
@@ -235,7 +237,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
     },
     dialogs: {
       customTitle: "Campo personalizado",
-      settingsTitle: "Ajustes de interaccion",
+      settingsTitle: "Ajustes",
       bestTimesTitle: "Mejores tiempos",
       statisticsTitle: "Estadisticas",
       controlsTitle: "Controles",
@@ -249,7 +251,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
     },
     help: {
       controls:
-        "Escritorio: clic izquierdo abre, clic derecho marca, doble clic o Mayus+clic hace acorde. Tactil: manten pulsado para marcar. El tiempo de gestos se configura en Entrenamiento > Ajustes de interaccion.",
+        "Escritorio: clic izquierdo abre, clic derecho marca, doble clic o Mayus+clic hace acorde. Tactil: manten pulsado para marcar. El tiempo de gestos se configura en Entrenamiento > Ajustes.",
       trainer:
         "El modo entrenador colorea las celdas ocultas segun la probabilidad de mina. Desde el menu de Entrenamiento puedes cambiar entre color, porcentaje y puntos.",
     },
@@ -325,5 +327,5 @@ export function difficultyLabel(
     return translate(language, "difficulty.levelLabel", { level });
   }
 
-  return `${level} (${translate(language, `difficulty.classic.${classicLabel}`)})`;
+  return `${translate(language, "difficulty.levelLabel", { level })} (${translate(language, `difficulty.classic.${classicLabel}`)})`;
 }

@@ -81,6 +81,18 @@
               <div class="menu-separator"></div>
               <button class="menu-entry" data-menu-action="open-best-times-dialog" type="button" data-i18n="menu.bestTimes">Best Times</button>
               <button class="menu-entry" data-menu-action="open-statistics-dialog" type="button" data-i18n="menu.statistics">Statistics</button>
+              <div class="menu-separator"></div>
+              <div class="menu-entry menu-entry-submenu" data-submenu-trigger="theme" tabindex="0">
+                <span data-i18n="menu.theme">Theme</span>
+                <span class="submenu-arrow" aria-hidden="true">▶</span>
+                <div class="submenu-panel" data-submenu-panel="theme">
+                  <button class="menu-entry menu-entry-radio" data-theme-name="xp-blue" type="button">Blue</button>
+                  <button class="menu-entry menu-entry-radio" data-theme-name="xp-olive" type="button">Olive Green</button>
+                  <button class="menu-entry menu-entry-radio" data-theme-name="xp-silver" type="button">Silver</button>
+                  <button class="menu-entry menu-entry-radio" data-theme-name="astronomer" type="button">Astronomer</button>
+                  <button class="menu-entry menu-entry-radio" data-theme-name="mogged" type="button">Mogged</button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -90,28 +102,14 @@
               <button class="menu-entry menu-entry-checkbox" data-menu-action="toggle-trainer" type="button" data-i18n="menu.enableTrainer">
                 Enable Trainer
               </button>
-              <div class="menu-entry menu-entry-submenu" data-submenu-trigger="overlay" tabindex="0">
-                <span data-i18n="menu.overlayMode">Overlay</span>
-                <span class="submenu-arrow" aria-hidden="true">▶</span>
-                <div class="submenu-panel" data-submenu-panel="overlay">
-                  <button class="menu-entry menu-entry-radio" data-overlay-mode="color" type="button" data-i18n="overlay.color">Color Wash</button>
-                  <button class="menu-entry menu-entry-radio" data-overlay-mode="percent" type="button" data-i18n="overlay.percent">Percent</button>
-                  <button class="menu-entry menu-entry-radio" data-overlay-mode="dots" type="button" data-i18n="overlay.dots">Dots</button>
-                </div>
-              </div>
+              <div class="menu-separator"></div>
+              <button class="menu-entry menu-entry-radio" data-overlay-mode="color" type="button" data-i18n="overlay.color">Color Wash</button>
+              <button class="menu-entry menu-entry-radio" data-overlay-mode="percent" type="button" data-i18n="overlay.percent">Percent</button>
+              <button class="menu-entry menu-entry-radio" data-overlay-mode="dots" type="button" data-i18n="overlay.dots">Dots</button>
+              <div class="menu-separator"></div>
               <button class="menu-entry" data-menu-action="open-settings-dialog" type="button" data-i18n="menu.settings">
-                Interaction Settings...
+                Settings...
               </button>
-              <div class="menu-entry menu-entry-submenu" data-submenu-trigger="theme" tabindex="0">
-                <span data-i18n="menu.theme">Theme</span>
-                <span class="submenu-arrow" aria-hidden="true">▶</span>
-                <div class="submenu-panel" data-submenu-panel="theme">
-                  <button class="menu-entry menu-entry-radio" data-theme-name="xp-blue" type="button">Blue</button>
-                  <button class="menu-entry menu-entry-radio" data-theme-name="xp-olive" type="button">Olive Green</button>
-                  <button class="menu-entry menu-entry-radio" data-theme-name="xp-silver" type="button">Silver</button>
-                  <button class="menu-entry menu-entry-radio" data-theme-name="mogged" type="button">Mogged</button>
-                </div>
-              </div>
             </div>
           </div>
 
