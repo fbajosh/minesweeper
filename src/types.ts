@@ -6,7 +6,7 @@ export type GameStatus = "ready" | "playing" | "won" | "lost";
 export type OverlayMode = "color" | "percent" | "dots";
 export type TouchTapMode = "single-open" | "single-chord";
 export type PointerKind = "mouse" | "touch" | "pen" | "keyboard" | "system";
-export type GameActionType = "open" | "flag" | "chord" | "new-game";
+export type GameActionType = "open" | "flag" | "chord" | "new-game" | "restart";
 export type GameOutcome = "won" | "lost" | "abandoned";
 
 export interface BoardConfig {
@@ -44,6 +44,7 @@ export interface GameState {
   cells: CellState[];
   status: GameStatus;
   seed: number;
+  minefieldGenerated: boolean;
   firstRevealIndex: number | null;
   createdAtMs: number;
   startedAtMs: number | null;
@@ -52,6 +53,7 @@ export interface GameState {
   flagsPlaced: number;
   revealedCount: number;
   moveCount: number;
+  restartCount: number;
 }
 
 export interface GameMutationResult {
@@ -131,6 +133,7 @@ export interface GameRecord {
   finishedAtIso: string;
   config: BoardConfig;
   seed: number;
+  restartCount: number;
   firstRevealIndex: number | null;
   outcome: GameOutcome;
   durationMs: number;

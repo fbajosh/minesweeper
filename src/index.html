@@ -59,6 +59,7 @@
             <button class="menu-button" data-menu-trigger="game" type="button" data-i18n="menu.game">Game</button>
             <div class="menu-panel" data-menu-panel="game">
               <button class="menu-entry" data-menu-action="new-game" type="button" data-i18n="menu.new">New</button>
+              <button class="menu-entry" data-menu-action="restart-game" type="button" data-i18n="menu.restart">Restart</button>
               <div class="menu-entry menu-entry-submenu" data-submenu-trigger="difficulty" tabindex="0">
                 <span data-i18n="menu.difficulty">Difficulty</span>
                 <span class="submenu-arrow" aria-hidden="true">▶</span>
@@ -73,9 +74,10 @@
                   <button class="menu-entry menu-entry-radio" data-difficulty-level="8" type="button">8</button>
                   <button class="menu-entry menu-entry-radio" data-difficulty-level="9" type="button">9</button>
                   <button class="menu-entry menu-entry-radio" data-difficulty-level="10" type="button">10</button>
+                  <div class="menu-separator"></div>
+                  <button class="menu-entry" data-menu-action="open-custom-dialog" type="button" data-i18n="menu.custom">Custom...</button>
                 </div>
               </div>
-              <button class="menu-entry" data-menu-action="open-custom-dialog" type="button" data-i18n="menu.custom">Custom...</button>
               <div class="menu-separator"></div>
               <button class="menu-entry" data-menu-action="open-best-times-dialog" type="button" data-i18n="menu.bestTimes">Best Times</button>
               <button class="menu-entry" data-menu-action="open-statistics-dialog" type="button" data-i18n="menu.statistics">Statistics</button>

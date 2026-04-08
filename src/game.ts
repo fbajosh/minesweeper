@@ -1,6 +1,13 @@
 import { DIRECTION_VECTORS } from "./constants";
 import type { BoardConfig, CellState, GameMutationResult, GameState } from "./types";
 
+interface CreateGameOptions {
+  seed?: number;
+  restartCount?: number;
+  minefieldGenerated?: boolean;
+  mineLayout?: boolean[];
+}
+
 function createSeed(): number {
   const randomBuffer = new Uint32Array(1);
   globalThis.crypto.getRandomValues(randomBuffer);
@@ -29,7 +36,7 @@ export function coordinatesFor(index: number, columns: number): { x: number; y: 
   };
 }
 
-export function createGame(config: BoardConfig, nowMs = Date.now()): GameState {
+export function createGame(config: BoardConfig, nowMs = Date.now(), options: CreateGameOptions = {}): GameState {
   const totalCells = config.columns * config.rows;
   const cells: CellState[] = Array.from({ length: totalCells }, (_, index) => {
     const { x, y } = coordinatesFor(index, config.columns);
@@ -45,12 +52,42 @@ export function createGame(config: BoardConfig, nowMs = Date.now()): GameState {
     };
   });
 
+  if (options.mineLayout && options.mineLayout.length === totalCells) {
+    for (let index = 0; index < totalCells; index += 1) {
+      cells[index].mine = Boolean(options.mineLayout[index]);
+    }
+
+    for (const cell of cells) {
+      if (cell.mine) {
+        cell.adjacentMines = 0;
+        continue;
+      }
+
+      cell.adjacentMines = DIRECTION_VECTORS.reduce((count, vector) => {
+        const neighborX = cell.x + vector.dx;
+        const neighborY = cell.y + vector.dy;
+        if (
+          neighborX < 0 ||
+          neighborY < 0 ||
+          neighborX >= config.columns ||
+          neighborY >= config.rows
+        ) {
+          return count;
+        }
+
+        const neighborIndex = indexFor(neighborX, neighborY, config.columns);
+        return count + (cells[neighborIndex].mine ? 1 : 0);
+      }, 0);
+    }
+  }
+
   return {
     id: `game-${nowMs}-${Math.random().toString(36).slice(2, 8)}`,
     config,
     cells,
     status: "ready",
-    seed: createSeed(),
+    seed: options.seed ?? createSeed(),
+    minefieldGenerated: Boolean(options.minefieldGenerated && options.mineLayout),
     firstRevealIndex: null,
     createdAtMs: nowMs,
     startedAtMs: null,
@@ -59,6 +96,7 @@ export function createGame(config: BoardConfig, nowMs = Date.now()): GameState {
     flagsPlaced: 0,
     revealedCount: 0,
     moveCount: 0,
+    restartCount: options.restartCount ?? 0,
   };
 }
 
@@ -173,12 +211,17 @@ function openHiddenCell(state: GameState, index: number, nowMs: number, changedI
   }
 
   let generatedMinefield = false;
-  if (state.firstRevealIndex === null) {
+  if (!state.minefieldGenerated) {
     state.firstRevealIndex = index;
     state.startedAtMs = nowMs;
     state.status = "playing";
     placeMines(state, index);
+    state.minefieldGenerated = true;
     generatedMinefield = true;
+  } else if (state.startedAtMs === null) {
+    state.firstRevealIndex = index;
+    state.startedAtMs = nowMs;
+    state.status = "playing";
   }
 
   if (cell.mine) {
@@ -197,6 +240,15 @@ function openHiddenCell(state: GameState, index: number, nowMs: number, changedI
     state.startedAtMs = nowMs;
   }
   return generatedMinefield;
+}
+
+export function createRestartGame(source: GameState, nowMs = Date.now()): GameState {
+  return createGame(source.config, nowMs, {
+    seed: source.seed,
+    restartCount: source.restartCount + 1,
+    minefieldGenerated: source.minefieldGenerated,
+    mineLayout: source.minefieldGenerated ? source.cells.map((cell) => cell.mine) : undefined,
+  });
 }
 
 function completeIfCleared(state: GameState, nowMs: number): void {

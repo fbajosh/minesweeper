@@ -116,6 +116,10 @@ function applyRecordToBucket(bucket: StatsBucket, record: GameRecord): StatsBuck
 }
 
 export function recordFinishedGame(stats: PersistedStats, record: GameRecord): PersistedStats {
+  if (record.restartCount > 0) {
+    return stats;
+  }
+
   const key = bucketKeyForConfig(record.config);
   const existingBucket = stats.buckets[key] ?? createEmptyBucket(key);
 

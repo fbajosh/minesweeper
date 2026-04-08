@@ -13,6 +13,7 @@ import {
   configForPreset,
 } from "./constants";
 import {
+  createRestartGame,
   chordCell,
   coordinatesFor,
   countRemainingMinesEstimate,
@@ -506,6 +507,12 @@ class MinesweeperApp {
       return;
     }
 
+    if (action === "restart-game") {
+      this.closeMenus();
+      this.restartGame();
+      return;
+    }
+
     if (action === "open-custom-dialog") {
       this.renderCustomDialog();
       this.closeMenus();
@@ -861,6 +868,7 @@ class MinesweeperApp {
       finishedAtIso: new Date().toISOString(),
       config: this.game.config,
       seed: this.game.seed,
+      restartCount: this.game.restartCount,
       firstRevealIndex: this.game.firstRevealIndex,
       outcome,
       durationMs,
@@ -882,6 +890,22 @@ class MinesweeperApp {
     this.finalizeSession();
     this.config = config;
     this.game = createGame(config);
+    this.activeSession = this.createActiveSession();
+    this.statusOverrideKey = null;
+    this.hoveredIndex = null;
+    this.boardViewport.scrollTo({ left: 0, top: 0 });
+    this.rebuildBoard();
+    this.refreshTrainerModel();
+    this.renderAll();
+  }
+
+  private restartGame(): void {
+    const sourceGame = this.game;
+    this.clearPendingTap();
+    this.closeMenus();
+    this.finalizeSession();
+    this.config = sourceGame.config;
+    this.game = createRestartGame(sourceGame);
     this.activeSession = this.createActiveSession();
     this.statusOverrideKey = null;
     this.hoveredIndex = null;
