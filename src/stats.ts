@@ -1,4 +1,4 @@
-import { DEFAULT_SETTINGS } from "./constants";
+import { DEFAULT_SETTINGS, THEMES } from "./constants";
 import type { BoardConfig, GameRecord, PersistedStats, StatsBucket } from "./types";
 
 const SETTINGS_STORAGE_KEY = "minesweeper-trainer-settings";
@@ -30,7 +30,7 @@ export function readStoredSettings() {
     }
 
     const parsed = JSON.parse(raw);
-    return {
+    const nextSettings = {
       ...DEFAULT_SETTINGS,
       ...parsed,
       customBoard: {
@@ -46,6 +46,12 @@ export function readStoredSettings() {
         ...(parsed?.trainer ?? {}),
       },
     };
+
+    if (!THEMES.includes(nextSettings.theme)) {
+      nextSettings.theme = DEFAULT_SETTINGS.theme;
+    }
+
+    return nextSettings;
   } catch {
     return DEFAULT_SETTINGS;
   }

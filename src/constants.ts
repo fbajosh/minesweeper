@@ -57,7 +57,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   trainer: DEFAULT_TRAINER_SETTINGS,
 };
 
-export const THEMES: ThemeName[] = ["xp-blue", "xp-olive", "xp-silver", "graphite"];
+export const THEMES: ThemeName[] = ["xp-blue", "xp-olive", "xp-silver", "mogged"];
 export const LANGUAGES = ["en-US", "es-ES"] as const;
 
 export const DIRECTION_VECTORS = [

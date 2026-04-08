@@ -128,17 +128,20 @@ function trainerMix(probability: number): string {
   return `color-mix(in srgb, var(--trainer-safe) ${safeWeight}%, var(--trainer-risk) ${riskWeight}%)`;
 }
 
-function dotBucket(probability: number): 1 | 2 | 3 | 4 {
-  if (probability < 0.25) {
+function dotBucket(probability: number): 0 | 1 | 2 | 3 | 4 {
+  if (probability <= 0) {
+    return 0;
+  }
+  if (probability >= 1) {
+    return 4;
+  }
+  if (probability < 1 / 3) {
     return 1;
   }
-  if (probability < 0.5) {
+  if (probability < 2 / 3) {
     return 2;
   }
-  if (probability < 0.75) {
-    return 3;
-  }
-  return 4;
+  return 3;
 }
 
 class MinesweeperApp {
@@ -1244,7 +1247,10 @@ class MinesweeperApp {
         if (overlayMode === "percent") {
           trainer.textContent = `${Math.round(probability * 100)}`;
         } else if (overlayMode === "dots") {
-          trainer.classList.add(`dots-${dotBucket(probability)}`);
+          const bucket = dotBucket(probability);
+          if (bucket > 0) {
+            trainer.classList.add(`dots-${bucket}`);
+          }
         }
       }
     });

@@ -215,30 +215,28 @@ button {
 .title-bar-left {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   min-width: 0;
 }
 
 .title-icon-shell {
-  width: 21px;
-  height: 21px;
-  padding: 1px;
-  background: linear-gradient(180deg, #f5f1e8 0%, #c8c1b2 100%);
-  border-top: 1px solid #ffffff;
-  border-left: 1px solid #ffffff;
-  border-right: 1px solid #6b675f;
-  border-bottom: 1px solid #6b675f;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.4);
+  width: auto;
+  height: 15px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  flex: 0 0 auto;
+  transform: translateY(2px);
 }
 
 .title-icon {
-  width: 16px;
-  height: 16px;
+  width: auto;
+  height: 15px;
   display: block;
-  image-rendering: pixelated;
 }
 
 .title-copy {
@@ -809,7 +807,10 @@ button {
   inset: 0;
   color: var(--trainer-text);
   font-size: 6px;
+  line-height: 1;
+  text-align: center;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+  transform: translateY(0.25px);
 }
 
 .cell[data-overlay-mode="dots"] .cell-trainer {

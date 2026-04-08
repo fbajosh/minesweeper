@@ -48,10 +48,10 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       "single-chord": "Single tap chords, double tap opens",
     },
     theme: {
-      "xp-blue": "XP Blue",
-      "xp-olive": "XP Olive",
-      "xp-silver": "XP Silver",
-      graphite: "Graphite",
+      "xp-blue": "Blue",
+      "xp-olive": "Olive Green",
+      "xp-silver": "Silver",
+      mogged: "Mogged",
     },
     language: {
       "en-US": "English",
@@ -172,10 +172,10 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       "single-chord": "Un toque acorde, doble toque abre",
     },
     theme: {
-      "xp-blue": "XP Azul",
-      "xp-olive": "XP Oliva",
-      "xp-silver": "XP Plata",
-      graphite: "Grafito",
+      "xp-blue": "Azul",
+      "xp-olive": "Verde oliva",
+      "xp-silver": "Plata",
+      mogged: "Mogged",
     },
     language: {
       "en-US": "English",
