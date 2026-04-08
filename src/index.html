@@ -15,7 +15,9 @@
       <section class="xp-window app-window" id="app-window" aria-label="Minesweeper window">
         <header class="title-bar">
           <div class="title-bar-left">
-            <img class="title-icon" src="./assets/favicon.svg" alt="" aria-hidden="true" />
+            <span class="title-icon-shell" aria-hidden="true">
+              <img class="title-icon" src="./assets/favicon.svg" alt="" />
+            </span>
             <div class="title-copy">
               <span class="title-text" data-i18n="app.title">Minesweeper</span>
               <span class="title-subtitle" data-i18n="app.subtitle">Trainer</span>
@@ -23,7 +25,7 @@
           </div>
           <div class="title-buttons">
             <button
-              class="title-button"
+              class="title-button title-button-minimize"
               id="title-minimize"
               type="button"
               aria-label="Minimize"
@@ -32,7 +34,7 @@
               <span aria-hidden="true">_</span>
             </button>
             <button
-              class="title-button"
+              class="title-button title-button-maximize"
               id="title-maximize"
               type="button"
               aria-label="Maximize"
@@ -133,7 +135,10 @@
             <div class="panel panel-sunken score-panel">
               <div class="counter-wrap">
                 <span class="visually-hidden" data-i18n="controls.mines">Mines</span>
-                <div class="counter-display" id="mine-counter" aria-live="polite">010</div>
+                <div class="counter-display" aria-live="polite">
+                  <span class="counter-display-underlay" aria-hidden="true">888</span>
+                  <span class="counter-display-value" id="mine-counter">010</span>
+                </div>
               </div>
 
               <button class="face-button" id="face-button" type="button" aria-label="Restart" data-i18n-aria-label="controls.restart">
@@ -142,7 +147,10 @@
 
               <div class="counter-wrap">
                 <span class="visually-hidden" data-i18n="controls.time">Time</span>
-                <div class="counter-display" id="timer-counter" aria-live="polite">000</div>
+                <div class="counter-display" aria-live="polite">
+                  <span class="counter-display-underlay" aria-hidden="true">888</span>
+                  <span class="counter-display-value" id="timer-counter">000</span>
+                </div>
               </div>
             </div>
 

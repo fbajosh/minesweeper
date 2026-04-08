@@ -183,6 +183,8 @@ class MinesweeperApp {
 
   private readonly boardShell = requireElement<HTMLElement>("#board-shell");
 
+  private readonly boardStage = requireElement<HTMLElement>(".board-stage");
+
   private readonly boardViewport = requireElement<HTMLElement>("#board-viewport");
 
   private readonly boardTransformLayer = requireElement<HTMLElement>("#board-transform-layer");
@@ -936,28 +938,32 @@ class MinesweeperApp {
 
     const baseCellSize = 16;
     const maxScale = portrait ? 3.2 : 1.75;
-    const viewportMargin = window.innerWidth < 560 ? 12 : 24;
-    const reservedHeight = window.innerWidth < 560 ? 150 : 210;
-    const availableWidth = Math.max(160, window.innerWidth - viewportMargin);
-    const availableHeight = Math.max(180, window.innerHeight - reservedHeight);
+    const stageBounds = this.boardStage.getBoundingClientRect();
+    const viewportBounds = this.boardViewport.getBoundingClientRect();
+    const edgeInset = window.innerWidth < 560 ? 8 : 12;
+    const availableWidth = Math.max(160, Math.floor(stageBounds.width));
+    const availableHeight = Math.max(180, window.innerHeight - viewportBounds.top - edgeInset);
     const fitColumns = Math.min(this.displayColumns, this.rotatedBoard ? 16 : MAX_AUTO_FIT_COLUMNS);
     const fitRows = Math.min(this.displayRows, this.rotatedBoard ? 30 : MAX_AUTO_FIT_ROWS);
+
+    const baseWidth = this.displayColumns * baseCellSize;
+    const baseHeight = this.displayRows * baseCellSize;
+    const widthScale = availableWidth / baseWidth;
+    const heightScale = availableHeight / (fitRows * baseCellSize);
+    const preferredScale = portrait ? widthScale : Math.min(widthScale, heightScale);
     const scale = Math.max(
-      1,
+      0.5,
       Math.min(
         maxScale,
-        availableWidth / (fitColumns * baseCellSize),
-        availableHeight / (fitRows * baseCellSize),
+        preferredScale,
       ),
     );
 
     this.boardScale = scale;
 
-    const baseWidth = this.displayColumns * baseCellSize;
-    const baseHeight = this.displayRows * baseCellSize;
     const renderWidth = Math.round(baseWidth * scale);
     const renderHeight = Math.round(baseHeight * scale);
-    const viewportWidth = Math.min(Math.round(availableWidth), renderWidth);
+    const viewportWidth = portrait ? Math.round(availableWidth) : Math.min(Math.round(availableWidth), renderWidth);
     const viewportHeight = Math.min(Math.round(availableHeight), renderHeight);
 
     this.boardViewport.style.width = `${viewportWidth}px`;
