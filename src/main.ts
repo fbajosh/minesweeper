@@ -649,6 +649,7 @@ class MinesweeperApp {
     cellButton.classList.add("is-pressing");
     this.faceButton.classList.add("is-pressed");
     this.boardViewport.setPointerCapture(event.pointerId);
+    this.renderScoreboard();
 
     if (pointerType !== "mouse") {
       const targetCell = this.game.cells[index];
@@ -693,6 +694,7 @@ class MinesweeperApp {
       this.clearLongPressTimer();
       this.clearPressedState();
       this.boardViewport.classList.add("is-dragging");
+      this.renderScoreboard();
     }
 
     if (!this.pointerSession.dragging) {
@@ -745,20 +747,20 @@ class MinesweeperApp {
     }
 
     if (pointerSession.pointerType === "mouse") {
+      this.clearPointerSession();
       if (event.shiftKey) {
         this.performGameAction("chord", index, "shift-click", "mouse");
       } else if (!cell.revealed && !cell.flagged) {
         this.performGameAction("open", index, "left-click", "mouse");
       }
-      this.clearPointerSession();
       return;
     }
 
     event.preventDefault();
     cellElement?.blur();
+    this.clearPointerSession();
     this.handleTouchTap(index, pointerSession.pointerType);
     this.setHoveredIndex(null);
-    this.clearPointerSession();
   }
 
   private handleTouchTap(index: number, pointerType: PointerKind): void {
@@ -1484,6 +1486,7 @@ class MinesweeperApp {
     this.boardViewport.classList.remove("is-dragging");
     this.pointerSession = null;
     this.faceButton.classList.remove("is-pressed");
+    this.renderScoreboard();
   }
 
   private displayPositionForCell(cell: CellState): { column: number; row: number } {
