@@ -624,12 +624,22 @@ button {
   margin: 0;
   border: none;
   background: var(--cell-hidden);
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: 0;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   touch-action: none;
+}
+
+.cell:focus,
+.cell:focus-visible {
+  outline: none;
 }
 
 .cell.is-hidden {
@@ -713,8 +723,8 @@ button {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 10px;
-  height: 13px;
+  width: 8px;
+  height: 11px;
   transform: translate(-50%, -50%);
   background: center / contain no-repeat url("./assets/flag.svg");
   z-index: 5;
@@ -739,31 +749,15 @@ button {
 .cell.is-mine.is-revealed:not(.is-flagged)::before {
   left: 50%;
   top: 50%;
-  width: 8px;
-  height: 8px;
+  width: 13px;
+  height: 13px;
   transform: translate(-50%, -50%);
-  border-radius: 50%;
-  background: var(--mine-color);
-  box-shadow:
-    0 -6px 0 -3px var(--mine-color),
-    0 6px 0 -3px var(--mine-color),
-    6px 0 0 -3px var(--mine-color),
-    -6px 0 0 -3px var(--mine-color),
-    4px 4px 0 -3px var(--mine-color),
-    -4px 4px 0 -3px var(--mine-color),
-    4px -4px 0 -3px var(--mine-color),
-    -4px -4px 0 -3px var(--mine-color);
+  background: center / contain no-repeat url("./assets/mine.svg");
   z-index: 4;
 }
 
 .cell.is-mine.is-revealed:not(.is-flagged)::after {
-  left: 45%;
-  top: 41%;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: var(--mine-shine);
-  z-index: 5;
+  display: none;
 }
 
 .cell.is-wrong-flag::before {

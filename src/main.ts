@@ -467,12 +467,16 @@ class MinesweeperApp {
     });
 
     this.boardGrid.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+      if (event.button !== 2) {
+        return;
+      }
+
       const cellButton = this.getCellButtonFromEvent(event);
       if (!cellButton) {
         return;
       }
 
-      event.preventDefault();
       const index = Number(cellButton.dataset.index);
       this.clearPendingTap();
       this.performGameAction("flag", index, "right-click", "mouse");
@@ -494,7 +498,10 @@ class MinesweeperApp {
     this.boardViewport.addEventListener("pointerup", (event) => this.handleBoardPointerUp(event));
     this.boardViewport.addEventListener("pointercancel", () => this.clearPointerSession());
 
-    this.boardGrid.addEventListener("mouseover", (event) => {
+    this.boardGrid.addEventListener("pointerover", (event) => {
+      if (event.pointerType !== "mouse") {
+        return;
+      }
       const cellButton = this.getCellButtonFromEvent(event);
       if (!cellButton) {
         return;
@@ -502,7 +509,10 @@ class MinesweeperApp {
       this.setHoveredIndex(Number(cellButton.dataset.index));
     });
 
-    this.boardGrid.addEventListener("mouseleave", () => {
+    this.boardGrid.addEventListener("pointerleave", (event) => {
+      if (event.pointerType !== "mouse") {
+        return;
+      }
       this.setHoveredIndex(null);
     });
 
@@ -599,6 +609,11 @@ class MinesweeperApp {
 
     const index = Number(cellButton.dataset.index);
     const pointerType = asPointerKind(event.pointerType);
+    if (pointerType !== "mouse") {
+      event.preventDefault();
+      cellButton.blur();
+      this.setHoveredIndex(null);
+    }
     this.pointerSession = {
       pointerId: event.pointerId,
       pointerType,
@@ -624,8 +639,12 @@ class MinesweeperApp {
             return;
           }
           this.pointerSession.longPressTriggered = true;
+          cellButton.blur();
+          if (this.boardViewport.hasPointerCapture(event.pointerId)) {
+            this.boardViewport.releasePointerCapture(event.pointerId);
+          }
+          this.clearPointerSession();
           this.performGameAction("flag", index, "long-press", pointerType);
-          this.clearPressedState();
         }, this.settings.interaction.longPressMs);
       }
     }
@@ -644,6 +663,10 @@ class MinesweeperApp {
     const deltaY = event.clientY - this.pointerSession.startY;
     const distance = Math.hypot(deltaX, deltaY);
     const isPannable = this.boardViewport.classList.contains("is-pannable");
+
+    if (!isPannable) {
+      return;
+    }
 
     if (!this.pointerSession.dragging && distance >= this.settings.interaction.dragThresholdPx) {
       this.pointerSession.dragging = true;
@@ -673,6 +696,7 @@ class MinesweeperApp {
     const pointerSession = this.pointerSession;
     const index = pointerSession.cellIndex;
     const cell = getCell(this.game, index);
+    const cellElement = this.cellElements[index]?.button;
 
     this.clearLongPressTimer();
     this.boardViewport.releasePointerCapture(event.pointerId);
@@ -686,6 +710,11 @@ class MinesweeperApp {
 
     if (pointerSession.longPressTriggered) {
       this.statusOverrideKey = null;
+      if (pointerSession.pointerType !== "mouse") {
+        event.preventDefault();
+        cellElement?.blur();
+        this.setHoveredIndex(null);
+      }
       this.clearPointerSession();
       this.renderAll();
       return;
@@ -706,7 +735,10 @@ class MinesweeperApp {
       return;
     }
 
+    event.preventDefault();
+    cellElement?.blur();
     this.handleTouchTap(index, pointerSession.pointerType);
+    this.setHoveredIndex(null);
     this.clearPointerSession();
   }
 
