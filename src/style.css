@@ -124,18 +124,10 @@ body {
 
 body {
   margin: 0;
-  background-image:
-    url("./assets/background.webp"),
-    url("./assets/background.webp");
-  background-position:
-    center center,
-    center center;
-  background-repeat:
-    no-repeat,
-    no-repeat;
-  background-size:
-    contain,
-    cover;
+  background-image: url("./assets/background.webp");
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
   color: var(--text-primary);
   font-family: var(--ui-font);
   font-size: 11px;
@@ -176,6 +168,10 @@ button {
   box-shadow: none;
   padding: 0;
   overflow: hidden;
+}
+
+.xp-window.is-minimized {
+  display: none;
 }
 
 .title-bar {

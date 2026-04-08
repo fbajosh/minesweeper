@@ -172,6 +172,8 @@ class MinesweeperApp {
 
   private statusOverrideKey: string | null = null;
 
+  private windowMinimized = false;
+
   private displayColumns = this.config.columns;
 
   private displayRows = this.config.rows;
@@ -199,6 +201,12 @@ class MinesweeperApp {
   private readonly faceButton = requireElement<HTMLButtonElement>("#face-button");
 
   private readonly faceLabel = requireElement<HTMLElement>("#face-button-label");
+
+  private readonly titleMinimizeButton = requireElement<HTMLButtonElement>("#title-minimize");
+
+  private readonly titleMaximizeButton = requireElement<HTMLButtonElement>("#title-maximize");
+
+  private readonly titleCloseButton = requireElement<HTMLButtonElement>("#title-close");
 
   private readonly difficultyPill = requireElement<HTMLElement>("#difficulty-pill");
 
@@ -291,13 +299,29 @@ class MinesweeperApp {
       this.faceButton.classList.remove("is-pressed");
     });
 
-    for (const titleButton of document.querySelectorAll<HTMLButtonElement>(".title-button")) {
-      titleButton.addEventListener("click", (event) => {
-        event.preventDefault();
-      });
-    }
+    this.titleMinimizeButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      this.minimizeWindow();
+    });
+
+    this.titleMaximizeButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    });
+
+    this.titleCloseButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      this.newGame(this.config);
+    });
 
     document.addEventListener("click", (event) => {
+      if (this.windowMinimized) {
+        this.restoreWindow();
+        return;
+      }
+
       const target = event.target as HTMLElement | null;
       if (!target?.closest(".menu-shell")) {
         this.closeMenus();
@@ -1330,6 +1354,17 @@ class MinesweeperApp {
       element.classList.remove("is-open");
     });
     this.renderMenuState();
+  }
+
+  private minimizeWindow(): void {
+    this.closeMenus();
+    this.windowMinimized = true;
+    this.appWindow.classList.add("is-minimized");
+  }
+
+  private restoreWindow(): void {
+    this.windowMinimized = false;
+    this.appWindow.classList.remove("is-minimized");
   }
 
   private setHoveredIndex(index: number | null): void {
