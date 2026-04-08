@@ -87,6 +87,13 @@ interface PointerSession {
   holdTimerId: number | null;
 }
 
+interface CounterMarquee {
+  message: string;
+  startedAtMs: number;
+}
+
+const COUNTER_MARQUEE_STEP_MS = 180;
+
 function requireElement<T extends Element>(selector: string): T {
   const element = document.querySelector<T>(selector);
   if (!element) {
@@ -179,6 +186,8 @@ class MinesweeperApp {
 
   private trainerOverlayVisible = false;
 
+  private counterMarquee: CounterMarquee | null = null;
+
   private displayColumns = this.config.columns;
 
   private displayRows = this.config.rows;
@@ -201,7 +210,15 @@ class MinesweeperApp {
 
   private readonly mineCounter = requireElement<HTMLElement>("#mine-counter");
 
+  private readonly mineCounterDisplay = requireElement<HTMLElement>("#mine-counter-display");
+
+  private readonly mineCounterUnderlay = requireElement<HTMLElement>("#mine-counter-underlay");
+
   private readonly timerCounter = requireElement<HTMLElement>("#timer-counter");
+
+  private readonly timerCounterDisplay = requireElement<HTMLElement>("#timer-counter-display");
+
+  private readonly timerCounterUnderlay = requireElement<HTMLElement>("#timer-counter-underlay");
 
   private readonly faceButton = requireElement<HTMLButtonElement>("#face-button");
 
@@ -284,7 +301,7 @@ class MinesweeperApp {
     this.applyTheme();
     this.rebuildBoard();
     this.renderAll();
-    this.timerHandle = window.setInterval(() => this.renderClock(), TIMER_TICK_MS);
+    this.timerHandle = window.setInterval(() => this.renderScoreboard(), TIMER_TICK_MS);
   }
 
   private bindEvents(): void {
@@ -822,6 +839,7 @@ class MinesweeperApp {
     gesture: string,
     pointerType: PointerKind,
   ): void {
+    this.clearCounterMarquee();
     const now = Date.now();
     let acted = false;
     let changedIndices: number[] = [];
@@ -851,6 +869,7 @@ class MinesweeperApp {
 
     if (this.game.status === "won" || this.game.status === "lost") {
       this.finalizeSession();
+      this.startCounterMarquee(this.game.status === "won" ? "NIIICE" : "BOOOOM");
     }
     this.renderAll();
   }
@@ -973,6 +992,7 @@ class MinesweeperApp {
     this.statusOverrideKey = null;
     this.hoveredIndex = null;
     this.trainerOverlayVisible = false;
+    this.startCounterMarquee("SEE!YA");
     this.boardViewport.scrollTo({ left: 0, top: 0 });
     this.rebuildBoard();
     this.refreshTrainerModel();
@@ -990,6 +1010,7 @@ class MinesweeperApp {
     this.statusOverrideKey = null;
     this.hoveredIndex = null;
     this.trainerOverlayVisible = false;
+    this.startCounterMarquee("SEE!YA");
     this.boardViewport.scrollTo({ left: 0, top: 0 });
     this.rebuildBoard();
     this.refreshTrainerModel();
@@ -1112,8 +1133,24 @@ class MinesweeperApp {
   }
 
   private renderScoreboard(): void {
-    this.mineCounter.textContent = formatCounter(countRemainingMinesEstimate(this.game));
-    this.renderClock();
+    const marqueeFrame = this.getCounterMarqueeFrame(Date.now());
+
+    if (marqueeFrame) {
+      this.mineCounterDisplay.classList.add("is-marquee");
+      this.timerCounterDisplay.classList.add("is-marquee");
+      this.mineCounterUnderlay.textContent = "   ";
+      this.timerCounterUnderlay.textContent = "   ";
+      this.mineCounter.textContent = marqueeFrame.slice(0, 3);
+      this.timerCounter.textContent = marqueeFrame.slice(3, 6);
+    } else {
+      this.mineCounterDisplay.classList.remove("is-marquee");
+      this.timerCounterDisplay.classList.remove("is-marquee");
+      this.mineCounterUnderlay.textContent = "888";
+      this.timerCounterUnderlay.textContent = "888";
+      this.mineCounter.textContent = formatCounter(countRemainingMinesEstimate(this.game));
+      this.renderClock();
+    }
+
     this.faceLabel.className = "face-button-label";
     this.faceLabel.textContent = "";
 
@@ -1487,6 +1524,43 @@ class MinesweeperApp {
     this.pointerSession = null;
     this.faceButton.classList.remove("is-pressed");
     this.renderScoreboard();
+  }
+
+  private startCounterMarquee(message: string): void {
+    this.counterMarquee = {
+      message: message.slice(0, 6),
+      startedAtMs: Date.now(),
+    };
+  }
+
+  private clearCounterMarquee(): void {
+    this.counterMarquee = null;
+  }
+
+  private getCounterMarqueeFrame(now: number): string | null {
+    if (!this.counterMarquee) {
+      return null;
+    }
+
+    const elapsedMs = now - this.counterMarquee.startedAtMs;
+    const baseFrameCount = 11;
+    if (elapsedMs >= baseFrameCount * COUNTER_MARQUEE_STEP_MS + COUNTER_MARQUEE_STEP_MS * 2) {
+      this.counterMarquee = null;
+      return null;
+    }
+
+    const frameIndex = Math.floor(elapsedMs / COUNTER_MARQUEE_STEP_MS);
+
+    if (frameIndex <= 5) {
+      return this.counterMarquee.message.slice(0, frameIndex + 1).padStart(6, "!");
+    }
+
+    if (frameIndex === 11) {
+      return this.counterMarquee.message;
+    }
+
+    const shift = frameIndex - 5;
+    return `${this.counterMarquee.message.slice(shift)}${"!".repeat(shift)}`;
   }
 
   private displayPositionForCell(cell: CellState): { column: number; row: number } {
