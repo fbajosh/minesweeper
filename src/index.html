@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="Classic Windows XP themed Minesweeper with mobile controls, trainer overlays, and local stats." />
+    <meta name="theme-color" content="#0a49e6" />
+    <title>Minesweeper Trainer</title>
+    <link rel="icon" type="image/webp" href="./assets/icon.webp" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="desktop-shell">
+      <section class="xp-window app-window" id="app-window" aria-label="Minesweeper window">
+        <header class="title-bar">
+          <div class="title-bar-left">
+            <span class="title-icon-shell" aria-hidden="true">
+              <img class="title-icon" src="./assets/icon.webp" alt="" />
+            </span>
+            <div class="title-copy">
+              <span class="title-text" data-i18n="app.title">Minesweeper</span>
+              <span class="title-subtitle" data-i18n="app.subtitle">Trainer</span>
+            </div>
+          </div>
+          <div class="title-buttons">
+            <button
+              class="title-button title-button-minimize"
+              id="title-minimize"
+              type="button"
+              aria-label="Minimize"
+              data-i18n-aria-label="controls.titleBarMinimize"
+            >
+              <img class="title-button-icon title-button-minimize-icon" src="./assets/minimize.svg" alt="" aria-hidden="true" />
+            </button>
+            <button
+              class="title-button title-button-maximize"
+              id="title-maximize"
+              type="button"
+              aria-label="Maximize"
+              data-i18n-aria-label="controls.titleBarMaximize"
+            >
+              <img class="title-button-icon title-button-maximize-icon" src="./assets/maximize.svg" alt="" aria-hidden="true" />
+            </button>
+            <button
+              class="title-button title-button-close"
+              id="title-close"
+              type="button"
+              aria-label="Close"
+              data-i18n-aria-label="controls.titleBarClose"
+            >
+              <img class="title-button-icon title-button-close-icon" src="./assets/close.svg" alt="" aria-hidden="true" />
+            </button>
+          </div>
+        </header>
+
+        <nav class="menu-bar" id="menu-bar" aria-label="Menu bar">
+          <div class="menu-shell" data-menu-shell="game">
+            <button class="menu-button" data-menu-trigger="game" type="button" data-i18n="menu.game">Game</button>
+            <div class="menu-panel" data-menu-panel="game">
+              <button class="menu-entry" data-menu-action="new-game" type="button" data-i18n="menu.new">New</button>
+              <button class="menu-entry" data-menu-action="restart-game" type="button" data-i18n="menu.restart">Restart</button>
+              <div class="menu-entry menu-entry-submenu" data-submenu-trigger="difficulty" tabindex="0">
+                <span data-i18n="menu.difficulty">Difficulty</span>
+                <span class="submenu-arrow" aria-hidden="true">▶</span>
+                <div class="submenu-panel" data-submenu-panel="difficulty">
+                  <button class="menu-entry menu-entry-radio" data-difficulty-level="1" type="button">1</button>
+                  <button class="menu-entry menu-entry-radio" data-difficulty-level="2" type="button">2</button>
+                  <button class="menu-entry menu-entry-radio" data-difficulty-level="3" type="button">3</button>
+                  <button class="menu-entry menu-entry-radio" data-difficulty-level="4" type="button">4</button>
+                  <button class="menu-entry menu-entry-radio" data-difficulty-level="5" type="button">5</button>
+                  <button class="menu-entry menu-entry-radio" data-difficulty-level="6" type="button">6</button>
+                  <button class="menu-entry menu-entry-radio" data-difficulty-level="7" type="button">7</button>
+                  <button class="menu-entry menu-entry-radio" data-difficulty-level="8" type="button">8</button>
+                  <button class="menu-entry menu-entry-radio" data-difficulty-level="9" type="button">9</button>
+                  <button class="menu-entry menu-entry-radio" data-difficulty-level="10" type="button">10</button>
+                  <div class="menu-separator"></div>
+                  <button class="menu-entry" data-menu-action="open-custom-dialog" type="button" data-i18n="menu.custom">Custom...</button>
+                </div>
+              </div>
+              <div class="menu-separator"></div>
+              <button class="menu-entry" data-menu-action="open-best-times-dialog" type="button" data-i18n="menu.bestTimes">Best Times</button>
+              <button class="menu-entry" data-menu-action="open-statistics-dialog" type="button" data-i18n="menu.statistics">Statistics</button>
+              <div class="menu-separator"></div>
+              <div class="menu-entry menu-entry-submenu" data-submenu-trigger="theme" tabindex="0">
+                <span data-i18n="menu.theme">Theme</span>
+                <span class="submenu-arrow" aria-hidden="true">▶</span>
+                <div class="submenu-panel" data-submenu-panel="theme">
+                  <button class="menu-entry menu-entry-radio" data-theme-name="xp-blue" type="button">Blue</button>
+                  <button class="menu-entry menu-entry-radio" data-theme-name="xp-olive" type="button">Olive Green</button>
+                  <button class="menu-entry menu-entry-radio" data-theme-name="xp-silver" type="button">Silver</button>
+                  <button class="menu-entry menu-entry-radio" data-theme-name="astronomer" type="button">Astronomer</button>
+                  <button class="menu-entry menu-entry-radio" data-theme-name="mogged" type="button">Mogged</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="menu-shell" data-menu-shell="training">
+            <button class="menu-button" data-menu-trigger="training" type="button" data-i18n="menu.training">Training</button>
+            <div class="menu-panel" data-menu-panel="training">
+              <button class="menu-entry menu-entry-checkbox" data-menu-action="toggle-trainer" type="button" data-i18n="menu.enableTrainer">
+                Enable Trainer
+              </button>
+              <div class="menu-separator"></div>
+              <button class="menu-entry menu-entry-radio" data-overlay-mode="color" type="button" data-i18n="overlay.color">Color Wash</button>
+              <button class="menu-entry menu-entry-radio" data-overlay-mode="percent" type="button" data-i18n="overlay.percent">Percent</button>
+              <button class="menu-entry menu-entry-radio" data-overlay-mode="dots" type="button" data-i18n="overlay.dots">Dots</button>
+              <div class="menu-separator"></div>
+              <button class="menu-entry" data-menu-action="open-settings-dialog" type="button" data-i18n="menu.settings">
+                Settings...
+              </button>
+            </div>
+          </div>
+
+          <div class="menu-shell" data-menu-shell="help">
+            <button class="menu-button" data-menu-trigger="help" type="button" data-i18n="menu.help">Help</button>
+            <div class="menu-panel" data-menu-panel="help">
+              <div class="menu-entry menu-entry-submenu" data-submenu-trigger="language" tabindex="0">
+                <span data-i18n="menu.language">Language</span>
+                <span class="submenu-arrow" aria-hidden="true">▶</span>
+                <div class="submenu-panel" data-submenu-panel="language">
+                  <button class="menu-entry menu-entry-radio" data-language-code="en-US" type="button">English</button>
+                  <button class="menu-entry menu-entry-radio" data-language-code="es-ES" type="button">Español</button>
+                </div>
+              </div>
+              <button class="menu-entry" data-menu-action="open-controls-dialog" type="button" data-i18n="menu.controls">Controls</button>
+              <button class="menu-entry" data-menu-action="open-about-dialog" type="button" data-i18n="menu.about">About Minesweeper</button>
+            </div>
+          </div>
+        </nav>
+
+        <section class="window-content">
+          <div class="playfield panel-raised" id="board-shell">
+            <div class="panel panel-sunken score-panel">
+              <div class="counter-wrap">
+                <span class="visually-hidden" data-i18n="controls.mines">Mines</span>
+                <div class="counter-display" id="mine-counter-display" aria-live="polite">
+                  <span class="counter-display-underlay" id="mine-counter-underlay" aria-hidden="true">888</span>
+                  <span class="counter-display-value" id="mine-counter">010</span>
+                </div>
+              </div>
+
+              <button class="face-button" id="face-button" type="button" aria-label="Restart" data-i18n-aria-label="controls.restart">
+                <span class="face-button-label" id="face-button-label" aria-hidden="true">:)</span>
+              </button>
+
+              <div class="counter-wrap">
+                <span class="visually-hidden" data-i18n="controls.time">Time</span>
+                <div class="counter-display" id="timer-counter-display" aria-live="polite">
+                  <span class="counter-display-underlay" id="timer-counter-underlay" aria-hidden="true">888</span>
+                  <span class="counter-display-value" id="timer-counter">000</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="board-divider" aria-hidden="true"></div>
+
+            <div class="board-stage">
+              <div class="board-viewport" id="board-viewport">
+                <div class="board-transform-layer" id="board-transform-layer">
+                  <div class="board-grid" id="board-grid" aria-label="Minesweeper board" data-i18n-aria-label="controls.board"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="status-text visually-hidden" id="status-text" aria-live="polite"></div>
+
+          <div class="meta-row app-meta-hidden" aria-hidden="true">
+            <div class="meta-pill" id="difficulty-pill"></div>
+            <div class="meta-pill" id="trainer-pill"></div>
+          </div>
+
+          <div class="footer-row app-meta-hidden" aria-hidden="true">
+            <div class="footer-text" id="pan-hint"></div>
+            <div class="footer-text" id="hover-hint" data-i18n="controls.hoverHint">Hover to inspect. Shift+click chords.</div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <dialog class="xp-dialog" id="custom-dialog">
+      <form class="dialog-card" id="custom-form" method="dialog">
+        <header class="dialog-header">
+          <h2 class="dialog-title" data-i18n="dialogs.customTitle">Custom Field</h2>
+        </header>
+        <div class="dialog-body">
+          <label class="field-row">
+            <span data-i18n="controls.customBoardSize">Width</span>
+            <input class="text-input" id="custom-columns" type="number" min="8" max="60" required />
+          </label>
+          <label class="field-row">
+            <span data-i18n="controls.customBoardHeight">Height</span>
+            <input class="text-input" id="custom-rows" type="number" min="8" max="32" required />
+          </label>
+          <label class="field-row">
+            <span data-i18n="controls.customBoardMines">Mines</span>
+            <input class="text-input" id="custom-mines" type="number" min="1" required />
+          </label>
+        </div>
+        <footer class="dialog-footer">
+          <button class="dialog-button" value="cancel" type="button" data-dialog-close="custom-dialog" data-i18n="controls.cancel">Cancel</button>
+          <button class="dialog-button dialog-button-primary" value="default" type="submit" data-i18n="controls.start">Start</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog class="xp-dialog" id="settings-dialog">
+      <form class="dialog-card" id="settings-form" method="dialog">
+        <header class="dialog-header">
+          <h2 class="dialog-title" data-i18n="dialogs.settingsTitle">Interaction Settings</h2>
+        </header>
+        <div class="dialog-body">
+          <label class="field-row field-row-stack" for="double-tap-range">
+            <span data-i18n="controls.doubleTapWindow">Double-tap window</span>
+            <input id="double-tap-range" type="range" min="180" max="520" step="10" />
+            <strong id="double-tap-value"></strong>
+          </label>
+          <label class="field-row field-row-stack" for="long-press-range">
+            <span data-i18n="controls.longPressWindow">Long-hold time</span>
+            <input id="long-press-range" type="range" min="220" max="900" step="10" />
+            <strong id="long-press-value"></strong>
+          </label>
+          <label class="field-row field-row-stack" for="drag-threshold-range">
+            <span data-i18n="controls.dragThreshold">Drag sensitivity</span>
+            <input id="drag-threshold-range" type="range" min="4" max="32" step="1" />
+            <strong id="drag-threshold-value"></strong>
+          </label>
+          <label class="field-row field-row-stack" for="touch-tap-mode-select">
+            <span data-i18n="controls.tapMode">Touch tap behavior</span>
+            <select class="text-input" id="touch-tap-mode-select">
+              <option value="single-open"></option>
+              <option value="single-chord"></option>
+            </select>
+          </label>
+        </div>
+        <footer class="dialog-footer">
+          <button class="dialog-button dialog-button-primary" type="button" data-dialog-close="settings-dialog" data-i18n="controls.close">Close</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog class="xp-dialog" id="best-times-dialog">
+      <form class="dialog-card" method="dialog">
+        <header class="dialog-header">
+          <h2 class="dialog-title" data-i18n="dialogs.bestTimesTitle">Best Times</h2>
+        </header>
+        <div class="dialog-body">
+          <div class="summary-block">
+            <div class="summary-label" id="best-times-context"></div>
+            <ol class="best-times-list" id="best-times-list"></ol>
+            <p class="summary-empty" id="best-times-empty" data-i18n="controls.noTimes">No wins recorded yet.</p>
+          </div>
+        </div>
+        <footer class="dialog-footer">
+          <button class="dialog-button dialog-button-primary" type="button" data-dialog-close="best-times-dialog" data-i18n="controls.close">Close</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog class="xp-dialog" id="statistics-dialog">
+      <form class="dialog-card" method="dialog">
+        <header class="dialog-header">
+          <h2 class="dialog-title" data-i18n="dialogs.statisticsTitle">Statistics</h2>
+        </header>
+        <div class="dialog-body">
+          <div class="stats-grid">
+            <section class="summary-block">
+              <h3 class="summary-title" data-i18n="controls.current">Current</h3>
+              <dl class="stats-list" id="current-stats-list"></dl>
+            </section>
+            <section class="summary-block">
+              <h3 class="summary-title" data-i18n="controls.overall">Overall</h3>
+              <dl class="stats-list" id="overall-stats-list"></dl>
+            </section>
+          </div>
+          <p class="summary-empty" id="stats-empty" data-i18n="controls.noStats">No completed games recorded yet.</p>
+        </div>
+        <footer class="dialog-footer">
+          <button class="dialog-button dialog-button-primary" type="button" data-dialog-close="statistics-dialog" data-i18n="controls.close">Close</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog class="xp-dialog" id="controls-dialog">
+      <form class="dialog-card" method="dialog">
+        <header class="dialog-header">
+          <h2 class="dialog-title" data-i18n="dialogs.controlsTitle">Controls</h2>
+        </header>
+        <div class="dialog-body">
+          <p class="dialog-copy" data-i18n="help.controls">
+            Desktop: left-click opens, right-click flags, double-click or Shift+click chords. Touch: tap and hold to flag.
+          </p>
+          <p class="dialog-copy" data-i18n="help.trainer">
+            Trainer mode shades hidden cells by mine probability. Color is the default overlay, with percent and dot modes available.
+          </p>
+        </div>
+        <footer class="dialog-footer">
+          <button class="dialog-button dialog-button-primary" type="button" data-dialog-close="controls-dialog" data-i18n="controls.close">Close</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog class="xp-dialog" id="about-dialog">
+      <form class="dialog-card" method="dialog">
+        <header class="dialog-header">
+          <h2 class="dialog-title" data-i18n="dialogs.aboutTitle">About Minesweeper Trainer</h2>
+        </header>
+        <div class="dialog-body">
+          <p class="dialog-copy" data-i18n="about.body">
+            This build recreates classic Minesweeper in a Windows XP shell, adds mobile-first controls, detailed local stats, and trainer probability plumbing.
+          </p>
+          <p class="dialog-copy" data-i18n="about.credits">
+            Hosted at appmogged.com/minesweeper. Built with TypeScript and Vite for local development and static deployment.
+          </p>
+        </div>
+        <footer class="dialog-footer">
+          <button class="dialog-button dialog-button-primary" type="button" data-dialog-close="about-dialog" data-i18n="controls.close">Close</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
