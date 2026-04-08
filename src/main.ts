@@ -171,11 +171,21 @@ class MinesweeperApp {
 
   private statusOverrideKey: string | null = null;
 
+  private displayColumns = this.config.columns;
+
+  private displayRows = this.config.rows;
+
+  private boardScale = 1;
+
+  private rotatedBoard = false;
+
   private readonly appWindow = requireElement<HTMLElement>("#app-window");
 
   private readonly boardShell = requireElement<HTMLElement>("#board-shell");
 
   private readonly boardViewport = requireElement<HTMLElement>("#board-viewport");
+
+  private readonly boardTransformLayer = requireElement<HTMLElement>("#board-transform-layer");
 
   private readonly boardGrid = requireElement<HTMLElement>("#board-grid");
 
@@ -471,7 +481,7 @@ class MinesweeperApp {
 
     window.addEventListener("resize", () => {
       this.syncBoardMetrics();
-      this.renderBoard();
+      this.renderAll();
     });
   }
 
@@ -600,7 +610,7 @@ class MinesweeperApp {
     const deltaX = event.clientX - this.pointerSession.startX;
     const deltaY = event.clientY - this.pointerSession.startY;
     const distance = Math.hypot(deltaX, deltaY);
-    const isPannable = isOversizedBoard(this.config);
+    const isPannable = this.boardViewport.classList.contains("is-pannable");
 
     if (!this.pointerSession.dragging && distance >= this.settings.interaction.dragThresholdPx) {
       this.pointerSession.dragging = true;
@@ -895,8 +905,6 @@ class MinesweeperApp {
   private rebuildBoard(): void {
     this.boardGrid.replaceChildren();
     this.cellElements = [];
-    this.boardGrid.style.setProperty("--board-columns", String(this.config.columns));
-    this.boardGrid.style.setProperty("--board-rows", String(this.config.rows));
 
     for (const cell of this.game.cells) {
       const button = document.createElement("button");
@@ -921,18 +929,57 @@ class MinesweeperApp {
   }
 
   private syncBoardMetrics(): void {
-    const availableWidth = Math.max(240, this.boardShell.clientWidth - 12);
-    const availableHeight = Math.max(220, Math.min(window.innerHeight * 0.62, 480));
-    const fitColumns = Math.min(this.config.columns, MAX_AUTO_FIT_COLUMNS);
-    const fitRows = Math.min(this.config.rows, MAX_AUTO_FIT_ROWS);
-    const widthCellSize = Math.floor(availableWidth / fitColumns);
-    const heightCellSize = Math.floor(availableHeight / fitRows);
-    const cellSize = Math.max(10, Math.min(24, widthCellSize, heightCellSize));
+    const portrait = window.innerHeight > window.innerWidth;
+    this.rotatedBoard = portrait && this.config.columns > this.config.rows;
+    this.displayColumns = this.rotatedBoard ? this.config.rows : this.config.columns;
+    this.displayRows = this.rotatedBoard ? this.config.columns : this.config.rows;
 
-    document.documentElement.style.setProperty("--cell-size", `${cellSize}px`);
-    document.documentElement.style.setProperty("--board-columns", String(this.config.columns));
-    document.documentElement.style.setProperty("--board-rows", String(this.config.rows));
-    this.boardViewport.classList.toggle("is-pannable", isOversizedBoard(this.config));
+    const baseCellSize = 16;
+    const maxScale = portrait ? 3.2 : 1.75;
+    const viewportMargin = window.innerWidth < 560 ? 12 : 24;
+    const reservedHeight = window.innerWidth < 560 ? 150 : 210;
+    const availableWidth = Math.max(160, window.innerWidth - viewportMargin);
+    const availableHeight = Math.max(180, window.innerHeight - reservedHeight);
+    const fitColumns = Math.min(this.displayColumns, this.rotatedBoard ? 16 : MAX_AUTO_FIT_COLUMNS);
+    const fitRows = Math.min(this.displayRows, this.rotatedBoard ? 30 : MAX_AUTO_FIT_ROWS);
+    const scale = Math.max(
+      1,
+      Math.min(
+        maxScale,
+        availableWidth / (fitColumns * baseCellSize),
+        availableHeight / (fitRows * baseCellSize),
+      ),
+    );
+
+    this.boardScale = scale;
+
+    const baseWidth = this.displayColumns * baseCellSize;
+    const baseHeight = this.displayRows * baseCellSize;
+    const renderWidth = Math.round(baseWidth * scale);
+    const renderHeight = Math.round(baseHeight * scale);
+    const viewportWidth = Math.min(Math.round(availableWidth), renderWidth);
+    const viewportHeight = Math.min(Math.round(availableHeight), renderHeight);
+
+    this.boardViewport.style.width = `${viewportWidth}px`;
+    this.boardViewport.style.height = `${viewportHeight}px`;
+    this.boardTransformLayer.style.width = `${renderWidth}px`;
+    this.boardTransformLayer.style.height = `${renderHeight}px`;
+    this.boardGrid.style.width = `${baseWidth}px`;
+    this.boardGrid.style.height = `${baseHeight}px`;
+    this.boardGrid.style.transform = `scale(${scale})`;
+    this.boardGrid.style.setProperty("--display-columns", String(this.displayColumns));
+    this.boardGrid.style.setProperty("--display-rows", String(this.displayRows));
+    this.boardViewport.classList.toggle("is-pannable", renderWidth > viewportWidth || renderHeight > viewportHeight);
+
+    for (const cell of this.game.cells) {
+      const elements = this.cellElements[cell.index];
+      if (!elements) {
+        continue;
+      }
+      const { column, row } = this.displayPositionForCell(cell);
+      elements.button.style.gridColumnStart = String(column + 1);
+      elements.button.style.gridRowStart = String(row + 1);
+    }
   }
 
   private renderAll(): void {
@@ -1284,6 +1331,20 @@ class MinesweeperApp {
     this.boardViewport.classList.remove("is-dragging");
     this.pointerSession = null;
     this.faceButton.classList.remove("is-pressed");
+  }
+
+  private displayPositionForCell(cell: CellState): { column: number; row: number } {
+    if (!this.rotatedBoard) {
+      return {
+        column: cell.x,
+        row: cell.y,
+      };
+    }
+
+    return {
+      column: this.config.rows - 1 - cell.y,
+      row: cell.x,
+    };
   }
 
   private getCellButtonFromEvent(event: Event): HTMLButtonElement | null {

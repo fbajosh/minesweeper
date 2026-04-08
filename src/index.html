@@ -129,38 +129,42 @@
         </nav>
 
         <section class="window-content">
-          <div class="panel panel-sunken score-panel">
-            <div class="counter-wrap">
-              <span class="visually-hidden" data-i18n="controls.mines">Mines</span>
-              <div class="counter-display" id="mine-counter" aria-live="polite">010</div>
+          <div class="playfield panel-raised" id="board-shell">
+            <div class="panel panel-sunken score-panel">
+              <div class="counter-wrap">
+                <span class="visually-hidden" data-i18n="controls.mines">Mines</span>
+                <div class="counter-display" id="mine-counter" aria-live="polite">010</div>
+              </div>
+
+              <button class="face-button" id="face-button" type="button" aria-label="Restart" data-i18n-aria-label="controls.restart">
+                <span class="face-button-label" id="face-button-label" aria-hidden="true">:)</span>
+              </button>
+
+              <div class="counter-wrap">
+                <span class="visually-hidden" data-i18n="controls.time">Time</span>
+                <div class="counter-display" id="timer-counter" aria-live="polite">000</div>
+              </div>
             </div>
 
-            <button class="face-button" id="face-button" type="button" aria-label="Restart" data-i18n-aria-label="controls.restart">
-              <span class="face-button-label" id="face-button-label" aria-hidden="true">:)</span>
-            </button>
+            <div class="board-divider" aria-hidden="true"></div>
 
-            <div class="counter-wrap">
-              <span class="visually-hidden" data-i18n="controls.time">Time</span>
-              <div class="counter-display" id="timer-counter" aria-live="polite">000</div>
+            <div class="board-stage">
+              <div class="board-viewport" id="board-viewport">
+                <div class="board-transform-layer" id="board-transform-layer">
+                  <div class="board-grid" id="board-grid" aria-label="Minesweeper board" data-i18n-aria-label="controls.board"></div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="meta-row">
+          <div class="status-text visually-hidden" id="status-text" aria-live="polite"></div>
+
+          <div class="meta-row app-meta-hidden" aria-hidden="true">
             <div class="meta-pill" id="difficulty-pill"></div>
             <div class="meta-pill" id="trainer-pill"></div>
           </div>
 
-          <div class="status-row">
-            <div class="status-text" id="status-text"></div>
-          </div>
-
-          <div class="panel panel-sunken board-shell" id="board-shell">
-            <div class="board-viewport" id="board-viewport">
-              <div class="board-grid" id="board-grid" aria-label="Minesweeper board" data-i18n-aria-label="controls.board"></div>
-            </div>
-          </div>
-
-          <div class="footer-row">
+          <div class="footer-row app-meta-hidden" aria-hidden="true">
             <div class="footer-text" id="pan-hint"></div>
             <div class="footer-text" id="hover-hint" data-i18n="controls.hoverHint">Hover to inspect. Shift+click chords.</div>
           </div>
