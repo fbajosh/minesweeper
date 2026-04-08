@@ -687,8 +687,20 @@ class MinesweeperApp {
   }
 
   private handleTouchTap(index: number, pointerType: PointerKind): void {
+    if (this.game.status === "won" || this.game.status === "lost") {
+      return;
+    }
+
+    const now = Date.now();
+    if (this.pendingTap && this.pendingTap.index === index && this.pendingTap.expiresAt >= now) {
+      const action = this.pendingTap.action;
+      this.clearPendingTap();
+      this.performGameAction(action, index, action === "open" ? "double-tap-open" : "double-tap-chord", pointerType);
+      return;
+    }
+
     const cell = this.game.cells[index];
-    if (!cell || this.game.status === "won" || this.game.status === "lost") {
+    if (!cell) {
       return;
     }
 
@@ -704,24 +716,13 @@ class MinesweeperApp {
     }
 
     if (!action) {
+      this.clearPendingTap();
       return;
     }
 
     if (mode === "single") {
       this.clearPendingTap();
       this.performGameAction(action, index, action === "open" ? "single-tap" : "single-tap-chord", pointerType);
-      return;
-    }
-
-    const now = Date.now();
-    if (
-      this.pendingTap &&
-      this.pendingTap.index === index &&
-      this.pendingTap.action === action &&
-      this.pendingTap.expiresAt >= now
-    ) {
-      this.clearPendingTap();
-      this.performGameAction(action, index, action === "open" ? "double-tap-open" : "double-tap-chord", pointerType);
       return;
     }
 

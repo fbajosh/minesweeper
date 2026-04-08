@@ -1,4 +1,20 @@
 @font-face {
+  font-family: "TahomaEmbedded";
+  src: url("./assets/fonts/tahoma.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "TrebuchetMSEmbedded";
+  src: url("./assets/fonts/trebuc.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
   font-family: "DSEG7Classic";
   src: url("./assets/fonts/DSEG7Classic-Bold.woff2") format("woff2");
   font-style: normal;
@@ -52,8 +68,8 @@
   --text-primary: #111111;
   --text-secondary: #222222;
   --text-muted: #5b5b5b;
-  --trainer-safe: rgba(62, 160, 74, 0.3);
-  --trainer-risk: rgba(222, 68, 68, 0.42);
+  --trainer-safe: rgba(44, 164, 60, 0.52);
+  --trainer-risk: rgba(224, 60, 60, 0.7);
   --trainer-text: #111111;
   --surface-raised: #c0c0c0;
   --surface-raised-dark: #808080;
@@ -184,6 +200,7 @@ button {
   display: flex;
   align-items: center;
   gap: 3px;
+  font-family: "TrebuchetMSEmbedded", "Trebuchet MS", "Lucida Sans Unicode", sans-serif;
   font-weight: 700;
   font-size: 11px;
   letter-spacing: 0;
@@ -288,6 +305,7 @@ button {
   padding: 2px 6px 3px;
   position: relative;
   background: var(--window-body);
+  font-family: "TahomaEmbedded", Tahoma, "MS Sans Serif", sans-serif;
   font-size: 12px;
 }
 
@@ -472,7 +490,7 @@ button {
 }
 
 .counter-display-underlay {
-  color: #600000;
+  color: #480000;
   z-index: 0;
 }
 
@@ -749,10 +767,12 @@ button {
 
 .cell[data-overlay-mode="color"] .cell-trainer {
   background: var(--trainer-overlay, transparent);
+  inset: 0;
 }
 
 .cell[data-overlay-mode="percent"] .cell-trainer {
   background: var(--trainer-overlay, transparent);
+  inset: 0;
   color: var(--trainer-text);
   font-size: 6px;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);

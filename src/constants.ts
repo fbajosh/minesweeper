@@ -18,7 +18,7 @@ export const DEFAULT_LANGUAGE = "en-US";
 export const DEFAULT_THEME: ThemeName = "xp-blue";
 
 export const DEFAULT_INTERACTION_SETTINGS: InteractionSettings = {
-  doubleTapMs: 280,
+  doubleTapMs: 360,
   longPressMs: 380,
   dragThresholdPx: 10,
   touchTapMode: "single-open",
