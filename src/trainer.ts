@@ -1,8 +1,8 @@
 import { countRemainingMinesEstimate, getNeighborIndices } from "./game";
 import type { GameState, TrainerCellProbability, TrainerModel } from "./types";
 
-const MAX_COMPONENT_SIZE = 24;
-const MAX_SEARCH_NODES = 250000;
+const DEFAULT_MAX_COMPONENT_SIZE = 24;
+const DEFAULT_MAX_SEARCH_NODES = 250000;
 
 interface Constraint {
   cells: number[];
@@ -19,6 +19,11 @@ interface SolvedComponent {
   probabilities: number[];
   totalSolutions: number;
   solved: boolean;
+}
+
+interface TrainerSolveOptions {
+  maxComponentSize?: number;
+  maxSearchNodes?: number;
 }
 
 function buildConstraintModel(state: GameState): {
@@ -128,7 +133,7 @@ function connectedComponents(frontier: Set<number>, constraints: Constraint[]): 
   });
 }
 
-function solveComponent(component: Component): SolvedComponent {
+function solveComponent(component: Component, options: Required<TrainerSolveOptions>): SolvedComponent {
   if (component.cells.length === 0) {
     return {
       cells: [],
@@ -138,7 +143,7 @@ function solveComponent(component: Component): SolvedComponent {
     };
   }
 
-  if (component.cells.length > MAX_COMPONENT_SIZE) {
+  if (component.cells.length > options.maxComponentSize) {
     return {
       cells: component.cells,
       probabilities: component.cells.map(() => 0),
@@ -174,7 +179,7 @@ function solveComponent(component: Component): SolvedComponent {
 
   const assign = (position: number, chosenMines: number[]): boolean => {
     searchNodes += 1;
-    if (searchNodes > MAX_SEARCH_NODES) {
+    if (searchNodes > options.maxSearchNodes) {
       return false;
     }
 
@@ -252,7 +257,11 @@ function solveComponent(component: Component): SolvedComponent {
   };
 }
 
-export function computeTrainerModel(state: GameState): TrainerModel {
+export function computeTrainerModel(state: GameState, solveOptions: TrainerSolveOptions = {}): TrainerModel {
+  const options: Required<TrainerSolveOptions> = {
+    maxComponentSize: solveOptions.maxComponentSize ?? DEFAULT_MAX_COMPONENT_SIZE,
+    maxSearchNodes: solveOptions.maxSearchNodes ?? DEFAULT_MAX_SEARCH_NODES,
+  };
   const { hiddenUnflagged, frontier, constraints, baselineProbability, inconsistent } = buildConstraintModel(state);
   const probabilities = new Map<number, TrainerCellProbability>();
 
@@ -292,7 +301,7 @@ export function computeTrainerModel(state: GameState): TrainerModel {
     const solution = solveComponent({
       cells: component.cells,
       constraints: localConstraints,
-    });
+    }, options);
 
     if (!solution.solved) {
       unresolvedComponents += 1;

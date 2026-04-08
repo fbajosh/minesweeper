@@ -174,6 +174,8 @@ class MinesweeperApp {
 
   private windowMinimized = false;
 
+  private trainerOverlayVisible = false;
+
   private displayColumns = this.config.columns;
 
   private displayRows = this.config.rows;
@@ -284,19 +286,32 @@ class MinesweeperApp {
 
   private bindEvents(): void {
     this.faceButton.addEventListener("click", () => {
+      if (this.settings.trainer.enabled && this.game.status !== "won" && this.game.status !== "lost") {
+        return;
+      }
       this.newGame(this.config);
     });
 
     this.faceButton.addEventListener("pointerdown", () => {
       this.faceButton.classList.add("is-pressed");
+      if (this.settings.trainer.enabled && this.game.status !== "won" && this.game.status !== "lost") {
+        this.setTrainerOverlayVisible(true);
+      }
     });
 
     this.faceButton.addEventListener("pointerup", () => {
       this.faceButton.classList.remove("is-pressed");
+      this.setTrainerOverlayVisible(false);
     });
 
     this.faceButton.addEventListener("pointercancel", () => {
       this.faceButton.classList.remove("is-pressed");
+      this.setTrainerOverlayVisible(false);
+    });
+
+    this.faceButton.addEventListener("pointerleave", () => {
+      this.faceButton.classList.remove("is-pressed");
+      this.setTrainerOverlayVisible(false);
     });
 
     this.titleMinimizeButton.addEventListener("click", (event) => {
@@ -570,6 +585,7 @@ class MinesweeperApp {
 
     if (action === "toggle-trainer") {
       this.settings.trainer.enabled = !this.settings.trainer.enabled;
+      this.trainerOverlayVisible = false;
       this.persistSettings();
       this.refreshTrainerModel();
       this.renderAll();
@@ -824,6 +840,7 @@ class MinesweeperApp {
       return;
     }
 
+    this.trainerOverlayVisible = false;
     this.logAction(actionType, gesture, pointerType, index, changedIndices, now);
     this.refreshTrainerModel();
 
@@ -950,6 +967,7 @@ class MinesweeperApp {
     this.activeSession = this.createActiveSession();
     this.statusOverrideKey = null;
     this.hoveredIndex = null;
+    this.trainerOverlayVisible = false;
     this.boardViewport.scrollTo({ left: 0, top: 0 });
     this.rebuildBoard();
     this.refreshTrainerModel();
@@ -966,6 +984,7 @@ class MinesweeperApp {
     this.activeSession = this.createActiveSession();
     this.statusOverrideKey = null;
     this.hoveredIndex = null;
+    this.trainerOverlayVisible = false;
     this.boardViewport.scrollTo({ left: 0, top: 0 });
     this.rebuildBoard();
     this.refreshTrainerModel();
@@ -973,7 +992,7 @@ class MinesweeperApp {
   }
 
   private refreshTrainerModel(): void {
-    if (!this.settings.trainer.enabled || this.game.status === "lost") {
+    if (!this.settings.trainer.enabled || !this.trainerOverlayVisible || this.game.status === "lost") {
       this.trainerModel = {
         probabilities: new Map(),
         baselineProbability: 0,
@@ -982,7 +1001,10 @@ class MinesweeperApp {
       return;
     }
 
-    this.trainerModel = computeTrainerModel(this.game);
+    this.trainerModel = computeTrainerModel(this.game, {
+      maxComponentSize: 32,
+      maxSearchNodes: 2000000,
+    });
   }
 
   private rebuildBoard(): void {
@@ -1087,15 +1109,24 @@ class MinesweeperApp {
   private renderScoreboard(): void {
     this.mineCounter.textContent = formatCounter(countRemainingMinesEstimate(this.game));
     this.renderClock();
+    this.faceLabel.classList.remove("is-eye");
 
     if (this.game.status === "won") {
       this.faceLabel.textContent = "8)";
+      this.faceButton.setAttribute("aria-label", translate(this.settings.language, "controls.restart"));
     } else if (this.game.status === "lost") {
       this.faceLabel.textContent = "X(";
+      this.faceButton.setAttribute("aria-label", translate(this.settings.language, "controls.restart"));
+    } else if (this.settings.trainer.enabled) {
+      this.faceLabel.textContent = "";
+      this.faceLabel.classList.add("is-eye");
+      this.faceButton.setAttribute("aria-label", translate(this.settings.language, "controls.showTrainerOverlay"));
     } else if (this.pointerSession && !this.pointerSession.dragging) {
       this.faceLabel.textContent = ":O";
+      this.faceButton.setAttribute("aria-label", translate(this.settings.language, "controls.restart"));
     } else {
       this.faceLabel.textContent = ":)";
+      this.faceButton.setAttribute("aria-label", translate(this.settings.language, "controls.restart"));
     }
   }
 
@@ -1397,6 +1428,20 @@ class MinesweeperApp {
   private restoreWindow(): void {
     this.windowMinimized = false;
     this.appWindow.classList.remove("is-minimized");
+  }
+
+  private setTrainerOverlayVisible(visible: boolean): void {
+    if (!this.settings.trainer.enabled || this.game.status === "won" || this.game.status === "lost") {
+      visible = false;
+    }
+
+    if (this.trainerOverlayVisible === visible) {
+      return;
+    }
+
+    this.trainerOverlayVisible = visible;
+    this.refreshTrainerModel();
+    this.renderAll();
   }
 
   private setHoveredIndex(index: number | null): void {
