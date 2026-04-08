@@ -963,19 +963,23 @@ class MinesweeperApp {
 
     const baseCellSize = 16;
     const maxScale = portrait ? 3.2 : 1.75;
+    const maxFitColumns = this.rotatedBoard ? MAX_AUTO_FIT_ROWS : MAX_AUTO_FIT_COLUMNS;
+    const maxFitRows = this.rotatedBoard ? MAX_AUTO_FIT_COLUMNS : MAX_AUTO_FIT_ROWS;
     const stageBounds = this.boardStage.getBoundingClientRect();
-    const viewportBounds = this.boardViewport.getBoundingClientRect();
-    const edgeInset = window.innerWidth < 560 ? 8 : 12;
+    const fitColumns = Math.min(this.displayColumns, maxFitColumns);
+    const fitRows = Math.min(this.displayRows, maxFitRows);
     const availableWidth = Math.max(160, Math.floor(stageBounds.width));
-    const availableHeight = Math.max(180, window.innerHeight - viewportBounds.top - edgeInset);
-    const fitColumns = Math.min(this.displayColumns, this.rotatedBoard ? 16 : MAX_AUTO_FIT_COLUMNS);
-    const fitRows = Math.min(this.displayRows, this.rotatedBoard ? 30 : MAX_AUTO_FIT_ROWS);
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+    const shellBottomInset = window.innerWidth < 560 ? 2 : 4;
+    const availableHeight = Math.max(180, Math.floor(viewportHeight - stageBounds.top - shellBottomInset));
 
     const baseWidth = this.displayColumns * baseCellSize;
     const baseHeight = this.displayRows * baseCellSize;
-    const widthScale = availableWidth / baseWidth;
-    const heightScale = availableHeight / (fitRows * baseCellSize);
-    const preferredScale = portrait ? widthScale : Math.min(widthScale, heightScale);
+    const fitWidth = fitColumns * baseCellSize;
+    const fitHeight = fitRows * baseCellSize;
+    const widthScale = availableWidth / fitWidth;
+    const heightScale = availableHeight / fitHeight;
+    const preferredScale = Math.min(widthScale, heightScale);
     const scale = Math.max(
       0.5,
       Math.min(
@@ -988,11 +992,11 @@ class MinesweeperApp {
 
     const renderWidth = Math.round(baseWidth * scale);
     const renderHeight = Math.round(baseHeight * scale);
-    const viewportWidth = portrait ? Math.round(availableWidth) : Math.min(Math.round(availableWidth), renderWidth);
-    const viewportHeight = Math.min(Math.round(availableHeight), renderHeight);
+    const viewportWidth = Math.min(Math.round(availableWidth), renderWidth);
+    const viewportHeightPx = Math.min(Math.round(availableHeight), renderHeight);
 
     this.boardViewport.style.width = `${viewportWidth}px`;
-    this.boardViewport.style.height = `${viewportHeight}px`;
+    this.boardViewport.style.height = `${viewportHeightPx}px`;
     this.boardTransformLayer.style.width = `${renderWidth}px`;
     this.boardTransformLayer.style.height = `${renderHeight}px`;
     this.boardGrid.style.width = `${baseWidth}px`;
@@ -1000,7 +1004,7 @@ class MinesweeperApp {
     this.boardGrid.style.transform = `scale(${scale})`;
     this.boardGrid.style.setProperty("--display-columns", String(this.displayColumns));
     this.boardGrid.style.setProperty("--display-rows", String(this.displayRows));
-    this.boardViewport.classList.toggle("is-pannable", renderWidth > viewportWidth || renderHeight > viewportHeight);
+    this.boardViewport.classList.toggle("is-pannable", renderWidth > viewportWidth || renderHeight > viewportHeightPx);
 
     for (const cell of this.game.cells) {
       const elements = this.cellElements[cell.index];
