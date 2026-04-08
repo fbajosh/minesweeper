@@ -29,6 +29,39 @@
   --window-frame-light: #88b6ff;
   --window-body: #ece9d8;
   --window-body-shadow: #9a978b;
+  --titlebar-band:
+    linear-gradient(
+      180deg,
+      #0058ee 0% 3.45%,
+      #3f97ff 3.45% 6.9%,
+      #2b90ff 6.9% 10.34%,
+      #0372ff 10.34% 13.79%,
+      #0365f1 13.79% 17.24%,
+      #005ce9 17.24% 20.69%,
+      #0058e6 20.69% 24.14%,
+      #0054e3 24.14% 27.59%,
+      #0054e3 27.59% 31.03%,
+      #0054e3 31.03% 34.48%,
+      #0055e5 34.48% 37.93%,
+      #0055e5 37.93% 41.38%,
+      #0055e5 41.38% 44.83%,
+      #0055e5 44.83% 48.28%,
+      #0055ea 48.28% 51.72%,
+      #0055ea 51.72% 55.17%,
+      #0058ee 55.17% 58.62%,
+      #005bf2 58.62% 62.07%,
+      #005af5 62.07% 65.52%,
+      #0060f9 65.52% 68.97%,
+      #0164f9 68.97% 72.41%,
+      #026afe 72.41% 75.86%,
+      #026afe 75.86% 79.31%,
+      #026afe 79.31% 82.76%,
+      #026afe 82.76% 86.21%,
+      #0065fd 86.21% 89.66%,
+      #0060fc 89.66% 93.1%,
+      #004de3 93.1% 96.55%,
+      #0043cf 96.55% 100%
+    );
   --titlebar-start: #0a57dd;
   --titlebar-mid: #1c73ee;
   --titlebar-end: #3fa6ff;
@@ -125,13 +158,11 @@ button {
 .xp-window {
   width: fit-content;
   max-width: calc(100vw - 8px);
-  border: 1px solid var(--window-frame-dark);
+  border: none;
   border-radius: 8px 8px 0 0;
-  background: linear-gradient(180deg, var(--window-frame-light) 0%, var(--window-frame) 100%);
-  box-shadow:
-    0 0 0 1px rgba(146, 183, 255, 0.9),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.22);
-  padding: 3px 3px 4px;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
   overflow: hidden;
 }
 
@@ -141,12 +172,9 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 3px 6px 4px 7px;
-  min-height: 28px;
-  background:
-    linear-gradient(180deg, var(--titlebar-top-glow) 0, rgba(255, 255, 255, 0.42) 1px, rgba(255, 255, 255, 0.14) 2px, transparent 3px),
-    radial-gradient(circle at 0 0, var(--titlebar-left-glow) 0, transparent 46%),
-    linear-gradient(90deg, var(--titlebar-start) 0%, var(--titlebar-mid) 54%, var(--titlebar-end) 100%);
+  height: 29px;
+  padding: 1px 6px 0 7px;
+  background: var(--titlebar-band);
   color: var(--titlebar-text);
   border-top-left-radius: 5px;
   border-top-right-radius: 5px;
@@ -199,12 +227,14 @@ button {
 .title-copy {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
   font-family: "TrebuchetMSEmbedded", "Trebuchet MS", "Lucida Sans Unicode", sans-serif;
   font-weight: 700;
-  font-size: 11px;
+  font-size: 13px;
+  line-height: 10px;
   letter-spacing: 0;
   text-shadow: 1px 1px 0 var(--titlebar-text-shadow);
+  transform: translateY(2px);
   white-space: nowrap;
 }
 
@@ -216,25 +246,28 @@ button {
 
 .title-button {
   position: relative;
-  width: 25px;
+  width: 21px;
   height: 21px;
   border-radius: 3px;
-  border: 1px solid var(--title-button-border);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.76) 0, rgba(255, 255, 255, 0.3) 2px, transparent 4px),
-    linear-gradient(180deg, var(--title-button-start) 0%, var(--title-button-end) 100%);
+  border: none;
+  background: transparent;
   color: transparent;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  box-shadow:
-    inset 1px 1px 0 var(--title-button-highlight),
-    inset -1px -1px 0 rgba(0, 0, 0, 0.12);
+  box-shadow: none;
 }
 
 .title-button span {
   display: none;
+}
+
+.title-button-icon {
+  display: block;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
 }
 
 .title-button::before,
@@ -250,74 +283,66 @@ button {
 }
 
 .title-button:active {
-  background: linear-gradient(180deg, var(--title-button-end) 0%, var(--title-button-start) 100%);
-  box-shadow:
-    inset 1px 1px 0 rgba(0, 0, 0, 0.14),
-    inset -1px -1px 0 rgba(255, 255, 255, 0.26);
+  background: transparent;
+  box-shadow: none;
 }
 
 .title-button-minimize::before {
-  width: 8px;
-  height: 2px;
-  transform: translate(-50%, 4px);
-  background: var(--title-button-glyph);
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.28);
+  display: none;
 }
 
 .title-button-maximize::before {
-  width: 8px;
-  height: 7px;
-  transform: translate(-50%, -50%);
-  border: 2px solid var(--title-button-glyph);
-  border-top-width: 2px;
-  background: transparent;
-  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.18);
+  display: none;
 }
 
 .title-button-close {
-  width: 28px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.74) 0, rgba(255, 255, 255, 0.28) 2px, transparent 4px),
-    linear-gradient(180deg, var(--title-close-start) 0%, var(--title-close-end) 100%);
-  border-color: var(--title-close-border);
+  width: 21px;
 }
 
 .title-button-close::before,
 .title-button-close::after {
-  width: 10px;
-  height: 2px;
-  background: var(--title-button-glyph);
-  border-radius: 999px;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.28);
+  display: none;
 }
 
-.title-button-close::before {
-  transform: translate(-50%, -50%) rotate(45deg);
+.title-button-minimize-icon,
+.title-button-maximize-icon,
+.title-button-close-icon {
+  width: 100%;
+  height: 100%;
 }
 
-.title-button-close::after {
-  transform: translate(-50%, -50%) rotate(-45deg);
+.title-button-close:active {
+  background: transparent;
+  box-shadow: none;
 }
 
 .menu-bar {
   display: flex;
+  align-items: center;
   gap: 2px;
-  padding: 2px 6px 3px;
+  height: 19px;
+  padding: 0 6px;
   position: relative;
   background: var(--window-body);
   font-family: "TahomaEmbedded", Tahoma, "MS Sans Serif", sans-serif;
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .menu-shell {
   position: relative;
+  height: 19px;
 }
 
 .menu-button {
-  min-height: 20px;
-  padding: 1px 11px 2px;
+  height: 19px;
+  min-height: 19px;
+  padding: 0 8px 1px;
   border: 1px solid transparent;
   background: transparent;
+  display: inline-flex;
+  align-items: center;
+  line-height: 11px;
 }
 
 .menu-shell.is-open > .menu-button,
