@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Minesweeper">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a49e6" />
+      <stop offset="100%" stop-color="#3c91ff" />
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="10" fill="url(#g)" stroke="#001b7d" stroke-width="4" />
+  <rect x="16" y="16" width="32" height="32" fill="#c0c0c0" stroke="#7b7b7b" stroke-width="2" />
+  <path d="M23 18h2v28h-2zm14 0h2v28h-2zM18 23h28v2H18zm0 14h28v2H18z" fill="#ffffff" opacity=".85" />
+  <circle cx="32" cy="32" r="8" fill="#111111" />
+  <circle cx="28.5" cy="28.5" r="2" fill="#ffffff" />
+  <g stroke="#111111" stroke-width="3" stroke-linecap="round">
+    <path d="M32 11v8" />
+    <path d="M32 45v8" />
+    <path d="M11 32h8" />
+    <path d="M45 32h8" />
+    <path d="M18.5 18.5l5.7 5.7" />
+    <path d="M39.8 39.8l5.7 5.7" />
+    <path d="M18.5 45.5l5.7-5.7" />
+    <path d="M39.8 24.2l5.7-5.7" />
+  </g>
+</svg>

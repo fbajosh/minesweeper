@@ -1,0 +1,14 @@
+{
+  "name": "minesweeper-trainer",
+  "private": true,
+  "description": "Windows XP themed Minesweeper trainer built with TypeScript and Vite",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^8.0.3"
+  }
+}
