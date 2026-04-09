@@ -133,6 +133,7 @@ interface WindowResizeSession {
 const COUNTER_MARQUEE_STEP_MS = 180;
 const MIN_DESKTOP_BOARD_WIDTH = 400;
 const BUILD_VERSION = import.meta.env.VITE_BUILD_VERSION?.trim() || "dev";
+const BEST_MOVE_EPSILON = 1e-9;
 
 function requireElement<T extends Element>(selector: string): T {
   const element = document.querySelector<T>(selector);
@@ -1773,6 +1774,20 @@ class MinesweeperApp {
 
   private renderBoard(): void {
     const overlayMode = this.settings.trainer.overlayMode;
+    let bestMoveProbability: number | null = null;
+
+    if (overlayMode === "best-move" && this.settings.trainer.enabled) {
+      for (const [index, entry] of this.trainerModel.probabilities.entries()) {
+        const cell = this.game.cells[index];
+        if (!cell || cell.revealed || cell.flagged) {
+          continue;
+        }
+
+        if (bestMoveProbability === null || entry.probability < bestMoveProbability) {
+          bestMoveProbability = entry.probability;
+        }
+      }
+    }
 
     this.cellElements.forEach(({ button, value, trainer }, index) => {
       const cell = this.game.cells[index];
@@ -1824,7 +1839,19 @@ class MinesweeperApp {
         button.classList.add("is-wrong-flag");
       }
 
-      if (probability !== undefined && hidden && !cell.flagged && this.settings.trainer.enabled) {
+      const showBestMoveCell =
+        overlayMode === "best-move" &&
+        probability !== undefined &&
+        bestMoveProbability !== null &&
+        Math.abs(probability - bestMoveProbability) <= BEST_MOVE_EPSILON;
+
+      if (
+        probability !== undefined &&
+        hidden &&
+        !cell.flagged &&
+        this.settings.trainer.enabled &&
+        (overlayMode !== "best-move" || showBestMoveCell)
+      ) {
         button.classList.add("has-trainer");
         button.dataset.overlayMode = overlayMode;
         const mixedColor = trainerMix(probability);

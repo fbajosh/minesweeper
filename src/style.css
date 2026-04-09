@@ -699,11 +699,10 @@ button {
 }
 
 .face-button-label.is-eye {
-  border-radius: 50%;
-  border: 1px solid #111111;
-  background:
-    radial-gradient(circle at center, #111111 0 14%, #ffd43a 14% 34%, #ffffff 34% 100%);
-  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+  border: none;
+  border-radius: 0;
+  background: center / contain no-repeat url("./assets/eye.svg");
+  box-shadow: none;
 }
 
 .board-stage {
@@ -915,6 +914,11 @@ button {
 }
 
 .cell[data-overlay-mode="color"] .cell-trainer {
+  background: var(--trainer-overlay, transparent);
+  inset: 0;
+}
+
+.cell[data-overlay-mode="best-move"] .cell-trainer {
   background: var(--trainer-overlay, transparent);
   inset: 0;
 }

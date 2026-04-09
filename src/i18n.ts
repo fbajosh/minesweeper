@@ -41,9 +41,10 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       levelLabel: "Level {level}",
     },
     overlay: {
-      color: "Color Wash",
+      color: "Probability Map",
       percent: "Percent",
       dots: "Dots",
+      bestMove: "Best Move",
     },
     touchTapMode: {
       "single-open": "Single tap opens, double tap chords",
@@ -132,7 +133,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       controls:
         "Desktop: left-click opens, right-click flags, double-click or Shift+click chords. Touch: tap and hold to flag. Gesture timing is configurable in Game > Additional settings.",
       trainer:
-        "Trainer mode shades hidden cells by mine probability. Color is the default overlay, with percent and dot modes available from the Training menu.",
+        "Trainer mode shades hidden cells by mine probability. Probability Map is the default overlay, with percent, dot, and Best Move modes available from the Training menu.",
     },
   },
   "es-ES": {
@@ -170,9 +171,10 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       levelLabel: "Nivel {level}",
     },
     overlay: {
-      color: "Color",
+      color: "Mapa de probabilidad",
       percent: "Porcentaje",
       dots: "Puntos",
+      bestMove: "Mejor jugada",
     },
     touchTapMode: {
       "single-open": "Un toque abre, doble toque acorde",
@@ -261,7 +263,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       controls:
         "Escritorio: clic izquierdo abre, clic derecho marca, doble clic o Mayus+clic hace acorde. Tactil: manten pulsado para marcar. El tiempo de gestos se configura en Juego > Ajustes adicionales.",
       trainer:
-        "El modo entrenador colorea las celdas ocultas segun la probabilidad de mina. Desde el menu de Entrenamiento puedes cambiar entre color, porcentaje y puntos.",
+        "El modo entrenador colorea las celdas ocultas segun la probabilidad de mina. Desde el menu de Entrenamiento puedes cambiar entre mapa de probabilidad, porcentaje, puntos y mejor jugada.",
     },
   },
   "pt-BR": {
@@ -299,9 +301,10 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       levelLabel: "Nivel {level}",
     },
     overlay: {
-      color: "Lavagem de cor",
+      color: "Mapa de probabilidade",
       percent: "Porcentagem",
       dots: "Pontos",
+      bestMove: "Melhor jogada",
     },
     touchTapMode: {
       "single-open": "Um toque abre, toque duplo faz acorde",
@@ -390,7 +393,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       controls:
         "Desktop: clique esquerdo abre, clique direito marca, clique duplo ou Shift+clique faz acorde. No toque: segure para marcar. O tempo dos gestos pode ser ajustado em Jogo > Ajustes adicionais.",
       trainer:
-        "O modo trainer colore as celulas ocultas pela probabilidade de mina. No menu Treino voce pode escolher cor, porcentagem ou pontos.",
+        "O modo trainer colore as celulas ocultas pela probabilidade de mina. No menu Treino voce pode escolher mapa de probabilidade, porcentagem, pontos ou melhor jogada.",
     },
   },
 };
