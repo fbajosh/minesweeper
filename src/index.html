@@ -54,84 +54,85 @@
           </div>
         </header>
 
-        <nav class="menu-bar" id="menu-bar" aria-label="Menu bar">
-          <div class="menu-shell" data-menu-shell="game">
-            <button class="menu-button" data-menu-trigger="game" type="button" data-i18n="menu.game">Game</button>
-            <div class="menu-panel" data-menu-panel="game">
-              <button class="menu-entry" data-menu-action="new-game" type="button" data-i18n="menu.new">New game</button>
-              <button class="menu-entry" data-menu-action="restart-game" type="button" data-i18n="menu.restart">Restart game</button>
-              <button class="menu-entry" data-menu-action="undo-move" type="button" data-i18n="menu.undo">Undo</button>
-              <div class="menu-entry menu-entry-submenu" data-submenu-trigger="difficulty" tabindex="0">
-                <span data-i18n="menu.difficulty">Difficulty</span>
-                <span class="submenu-arrow" aria-hidden="true">▶</span>
-                <div class="submenu-panel" data-submenu-panel="difficulty">
-                  <button class="menu-entry menu-entry-radio" data-difficulty-level="1" type="button">1</button>
-                  <button class="menu-entry menu-entry-radio" data-difficulty-level="2" type="button">2</button>
-                  <button class="menu-entry menu-entry-radio" data-difficulty-level="3" type="button">3</button>
-                  <button class="menu-entry menu-entry-radio" data-difficulty-level="4" type="button">4</button>
-                  <button class="menu-entry menu-entry-radio" data-difficulty-level="5" type="button">5</button>
-                  <button class="menu-entry menu-entry-radio" data-difficulty-level="6" type="button">6</button>
-                  <button class="menu-entry menu-entry-radio" data-difficulty-level="7" type="button">7</button>
-                  <button class="menu-entry menu-entry-radio" data-difficulty-level="8" type="button">8</button>
-                  <button class="menu-entry menu-entry-radio" data-difficulty-level="9" type="button">9</button>
-                  <button class="menu-entry menu-entry-radio" data-difficulty-level="10" type="button">10</button>
-                  <div class="menu-separator"></div>
-                  <button class="menu-entry" data-menu-action="open-custom-dialog" type="button" data-i18n="menu.custom">Custom...</button>
+        <div class="window-body-frame">
+          <nav class="menu-bar" id="menu-bar" aria-label="Menu bar">
+            <div class="menu-shell" data-menu-shell="game">
+              <button class="menu-button" data-menu-trigger="game" type="button" data-i18n="menu.game">Game</button>
+              <div class="menu-panel" data-menu-panel="game">
+                <button class="menu-entry" data-menu-action="new-game" type="button" data-i18n="menu.new">New game</button>
+                <button class="menu-entry" data-menu-action="restart-game" type="button" data-i18n="menu.restart">Restart game</button>
+                <button class="menu-entry" data-menu-action="undo-move" type="button" data-i18n="menu.undo">Undo</button>
+                <div class="menu-entry menu-entry-submenu" data-submenu-trigger="difficulty" tabindex="0">
+                  <span data-i18n="menu.difficulty">Difficulty</span>
+                  <span class="submenu-arrow" aria-hidden="true">▶</span>
+                  <div class="submenu-panel" data-submenu-panel="difficulty">
+                    <button class="menu-entry menu-entry-radio" data-difficulty-level="1" type="button">1</button>
+                    <button class="menu-entry menu-entry-radio" data-difficulty-level="2" type="button">2</button>
+                    <button class="menu-entry menu-entry-radio" data-difficulty-level="3" type="button">3</button>
+                    <button class="menu-entry menu-entry-radio" data-difficulty-level="4" type="button">4</button>
+                    <button class="menu-entry menu-entry-radio" data-difficulty-level="5" type="button">5</button>
+                    <button class="menu-entry menu-entry-radio" data-difficulty-level="6" type="button">6</button>
+                    <button class="menu-entry menu-entry-radio" data-difficulty-level="7" type="button">7</button>
+                    <button class="menu-entry menu-entry-radio" data-difficulty-level="8" type="button">8</button>
+                    <button class="menu-entry menu-entry-radio" data-difficulty-level="9" type="button">9</button>
+                    <button class="menu-entry menu-entry-radio" data-difficulty-level="10" type="button">10</button>
+                    <div class="menu-separator"></div>
+                    <button class="menu-entry" data-menu-action="open-custom-dialog" type="button" data-i18n="menu.custom">Custom...</button>
+                  </div>
                 </div>
-              </div>
-              <div class="menu-separator"></div>
-              <button class="menu-entry" data-menu-action="open-best-times-dialog" type="button" data-i18n="menu.bestTimes">Best Times</button>
-              <button class="menu-entry" data-menu-action="open-statistics-dialog" type="button" data-i18n="menu.statistics">Statistics</button>
-              <div class="menu-separator"></div>
-              <div class="menu-entry menu-entry-submenu" data-submenu-trigger="theme" tabindex="0">
-                <span data-i18n="menu.theme">Theme</span>
-                <span class="submenu-arrow" aria-hidden="true">▶</span>
-                <div class="submenu-panel" data-submenu-panel="theme">
-                  <button class="menu-entry menu-entry-radio" data-theme-name="xp-blue" type="button">Blue</button>
-                  <button class="menu-entry menu-entry-radio" data-theme-name="xp-olive" type="button">Olive Green</button>
-                  <button class="menu-entry menu-entry-radio" data-theme-name="xp-silver" type="button">Silver</button>
-                  <button class="menu-entry menu-entry-radio" data-theme-name="astronomer" type="button">Astronomer</button>
-                  <button class="menu-entry menu-entry-radio" data-theme-name="mogged" type="button">Mogged</button>
+                <div class="menu-separator"></div>
+                <button class="menu-entry" data-menu-action="open-best-times-dialog" type="button" data-i18n="menu.bestTimes">Best Times</button>
+                <button class="menu-entry" data-menu-action="open-statistics-dialog" type="button" data-i18n="menu.statistics">Statistics</button>
+                <div class="menu-separator"></div>
+                <div class="menu-entry menu-entry-submenu" data-submenu-trigger="theme" tabindex="0">
+                  <span data-i18n="menu.theme">Theme</span>
+                  <span class="submenu-arrow" aria-hidden="true">▶</span>
+                  <div class="submenu-panel" data-submenu-panel="theme">
+                    <button class="menu-entry menu-entry-radio" data-theme-name="xp-blue" type="button">Blue</button>
+                    <button class="menu-entry menu-entry-radio" data-theme-name="xp-olive" type="button">Olive Green</button>
+                    <button class="menu-entry menu-entry-radio" data-theme-name="xp-silver" type="button">Silver</button>
+                    <button class="menu-entry menu-entry-radio" data-theme-name="astronomer" type="button">Astronomer</button>
+                    <button class="menu-entry menu-entry-radio" data-theme-name="mogged" type="button">Mogged</button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div class="menu-shell" data-menu-shell="training">
-            <button class="menu-button" data-menu-trigger="training" type="button" data-i18n="menu.training">Training</button>
-            <div class="menu-panel" data-menu-panel="training">
-              <button class="menu-entry menu-entry-checkbox" data-menu-action="toggle-trainer" type="button" data-i18n="menu.enableTrainer">
-                Enable Trainer
-              </button>
-              <div class="menu-separator"></div>
-              <button class="menu-entry menu-entry-radio" data-overlay-mode="color" type="button" data-i18n="overlay.color">Color Wash</button>
-              <button class="menu-entry menu-entry-radio" data-overlay-mode="percent" type="button" data-i18n="overlay.percent">Percent</button>
-              <button class="menu-entry menu-entry-radio" data-overlay-mode="dots" type="button" data-i18n="overlay.dots">Dots</button>
-              <div class="menu-separator"></div>
-              <button class="menu-entry" data-menu-action="open-settings-dialog" type="button" data-i18n="menu.settings">
-                Settings...
-              </button>
-            </div>
-          </div>
-
-          <div class="menu-shell" data-menu-shell="help">
-            <button class="menu-button" data-menu-trigger="help" type="button" data-i18n="menu.help">Help</button>
-            <div class="menu-panel" data-menu-panel="help">
-              <div class="menu-entry menu-entry-submenu" data-submenu-trigger="language" tabindex="0">
-                <span data-i18n="menu.language">Language</span>
-                <span class="submenu-arrow" aria-hidden="true">▶</span>
-                <div class="submenu-panel" data-submenu-panel="language">
-                  <button class="menu-entry menu-entry-radio" data-language-code="en-US" type="button">English</button>
-                  <button class="menu-entry menu-entry-radio" data-language-code="es-ES" type="button">Español</button>
-                </div>
+            <div class="menu-shell" data-menu-shell="training">
+              <button class="menu-button" data-menu-trigger="training" type="button" data-i18n="menu.training">Training</button>
+              <div class="menu-panel" data-menu-panel="training">
+                <button class="menu-entry menu-entry-checkbox" data-menu-action="toggle-trainer" type="button" data-i18n="menu.enableTrainer">
+                  Enable Trainer
+                </button>
+                <div class="menu-separator"></div>
+                <button class="menu-entry menu-entry-radio" data-overlay-mode="color" type="button" data-i18n="overlay.color">Color Wash</button>
+                <button class="menu-entry menu-entry-radio" data-overlay-mode="percent" type="button" data-i18n="overlay.percent">Percent</button>
+                <button class="menu-entry menu-entry-radio" data-overlay-mode="dots" type="button" data-i18n="overlay.dots">Dots</button>
+                <div class="menu-separator"></div>
+                <button class="menu-entry" data-menu-action="open-settings-dialog" type="button" data-i18n="menu.settings">
+                  Settings...
+                </button>
               </div>
-              <button class="menu-entry" data-menu-action="open-controls-dialog" type="button" data-i18n="menu.controls">Controls</button>
-              <button class="menu-entry" data-menu-action="open-about-dialog" type="button" data-i18n="menu.about">About Minesweeper</button>
             </div>
-          </div>
-        </nav>
 
-        <section class="window-content">
+            <div class="menu-shell" data-menu-shell="help">
+              <button class="menu-button" data-menu-trigger="help" type="button" data-i18n="menu.help">Help</button>
+              <div class="menu-panel" data-menu-panel="help">
+                <div class="menu-entry menu-entry-submenu" data-submenu-trigger="language" tabindex="0">
+                  <span data-i18n="menu.language">Language</span>
+                  <span class="submenu-arrow" aria-hidden="true">▶</span>
+                  <div class="submenu-panel" data-submenu-panel="language">
+                    <button class="menu-entry menu-entry-radio" data-language-code="en-US" type="button">English</button>
+                    <button class="menu-entry menu-entry-radio" data-language-code="es-ES" type="button">Español</button>
+                  </div>
+                </div>
+                <button class="menu-entry" data-menu-action="open-controls-dialog" type="button" data-i18n="menu.controls">Controls</button>
+                <button class="menu-entry" data-menu-action="open-about-dialog" type="button" data-i18n="menu.about">About Minesweeper</button>
+              </div>
+            </div>
+          </nav>
+
+          <section class="window-content">
           <div class="playfield panel-raised" id="board-shell">
             <div class="panel panel-sunken score-panel">
               <div class="counter-wrap">
@@ -154,9 +155,6 @@
                 </div>
               </div>
             </div>
-
-            <div class="board-divider" aria-hidden="true"></div>
-
             <div class="board-stage">
               <div class="board-viewport" id="board-viewport">
                 <div class="board-transform-layer" id="board-transform-layer">
@@ -177,7 +175,8 @@
             <div class="footer-text" id="pan-hint"></div>
             <div class="footer-text" id="hover-hint" data-i18n="controls.hoverHint">Hover to inspect. Shift+click chords.</div>
           </div>
-        </section>
+          </section>
+        </div>
 
         <div class="window-resize-handle" id="window-resize-handle" aria-hidden="true"></div>
       </section>

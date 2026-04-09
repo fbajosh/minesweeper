@@ -115,6 +115,7 @@ interface WindowResizeSession {
 }
 
 const COUNTER_MARQUEE_STEP_MS = 180;
+const MIN_DESKTOP_BOARD_WIDTH = 400;
 
 function requireElement<T extends Element>(selector: string): T {
   const element = document.querySelector<T>(selector);
@@ -736,7 +737,7 @@ class MinesweeperApp {
       parseFloat(boardShellStyles.borderLeftWidth) +
       parseFloat(boardShellStyles.borderRightWidth);
 
-    return Math.max(248, Math.ceil(this.scorePanel.scrollWidth + horizontalChrome));
+    return Math.max(248, Math.ceil(Math.max(this.scorePanel.scrollWidth, MIN_DESKTOP_BOARD_WIDTH) + horizontalChrome));
   }
 
   private getMaximumDesktopWindowWidth(minWidth: number): number {
@@ -782,7 +783,7 @@ class MinesweeperApp {
     const minWidth = this.getMinimumDesktopWindowWidth();
     const measuredWidth = Math.ceil(this.appWindow.getBoundingClientRect().width);
     if (this.desktopWindowWidth === null) {
-      this.desktopWindowWidth = Math.max(minWidth, measuredWidth || minWidth);
+      this.desktopWindowWidth = Math.max(minWidth, Math.floor(window.innerWidth * 0.5), measuredWidth || 0);
     }
 
     const maxWidth = this.getMaximumDesktopWindowWidth(minWidth);
@@ -1416,10 +1417,11 @@ class MinesweeperApp {
 
     this.boardScale = scale;
 
-    const renderWidth = Math.round(baseWidth * scale);
-    const renderHeight = Math.round(baseHeight * scale);
-    const viewportWidth = Math.min(Math.round(availableWidth), renderWidth);
-    const viewportHeightPx = Math.min(Math.round(availableHeight), renderHeight);
+    const renderWidth = baseWidth * scale;
+    const renderHeight = baseHeight * scale;
+    const viewportWidth = Math.min(availableWidth, renderWidth);
+    const viewportHeightPx = Math.min(availableHeight, renderHeight);
+    const pannable = renderWidth - viewportWidth > 0.5 || renderHeight - viewportHeightPx > 0.5;
 
     this.boardViewport.style.width = `${viewportWidth}px`;
     this.boardViewport.style.height = `${viewportHeightPx}px`;
@@ -1430,7 +1432,7 @@ class MinesweeperApp {
     this.boardGrid.style.transform = `scale(${scale})`;
     this.boardGrid.style.setProperty("--display-columns", String(this.displayColumns));
     this.boardGrid.style.setProperty("--display-rows", String(this.displayRows));
-    this.boardViewport.classList.toggle("is-pannable", renderWidth > viewportWidth || renderHeight > viewportHeightPx);
+    this.boardViewport.classList.toggle("is-pannable", pannable);
 
     for (const cell of this.game.cells) {
       const elements = this.cellElements[cell.index];

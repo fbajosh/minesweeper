@@ -45,6 +45,7 @@
   --window-frame-light: #88b6ff;
   --window-body: #ece9d8;
   --window-body-shadow: #9a978b;
+  --body-frame-border: #0058ee;
   --titlebar-band:
     linear-gradient(
       180deg,
@@ -352,14 +353,38 @@ button {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   height: 19px;
-  padding: 0 6px;
+  padding: 0 3px;
   position: relative;
   background: var(--window-body);
   font-family: "TahomaEmbedded", Tahoma, "MS Sans Serif", sans-serif;
   font-size: 11px;
   font-weight: 600;
+}
+
+.window-body-frame {
+  position: relative;
+  width: 100%;
+  border-left: 2px solid var(--body-frame-border);
+  border-right: 2px solid var(--body-frame-border);
+  border-bottom: 2px solid var(--body-frame-border);
+  box-sizing: border-box;
+}
+
+.window-body-frame > .menu-bar,
+.window-body-frame > .window-content {
+  position: relative;
+  width: 100%;
+  margin: 0;
+}
+
+.window-body-frame > .menu-bar {
+  z-index: 2;
+}
+
+.window-body-frame > .window-content {
+  z-index: 1;
 }
 
 .menu-shell {
@@ -370,7 +395,7 @@ button {
 .menu-button {
   height: 19px;
   min-height: 19px;
-  padding: 0 8px 1px;
+  padding: 0 5px 1px;
   border: 1px solid transparent;
   background: transparent;
   display: inline-flex;
@@ -658,27 +683,22 @@ button {
   box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.12);
 }
 
-.board-divider {
-  height: 0;
-  border-top: 1px solid var(--surface-sunken);
-  border-bottom: 1px solid var(--surface-sunken-light);
-}
-
 .board-stage {
   width: 100%;
   max-width: none;
 }
 
 .board-viewport {
-  overflow: auto;
+  overflow: hidden;
   touch-action: none;
   cursor: default;
-  background: transparent;
+  background: var(--board-bg);
   scrollbar-width: thin;
   max-width: 100%;
 }
 
 .board-viewport.is-pannable {
+  overflow: auto;
   cursor: grab;
 }
 
@@ -688,6 +708,7 @@ button {
 
 .board-transform-layer {
   position: relative;
+  background: var(--board-bg);
 }
 
 .board-grid {
