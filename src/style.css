@@ -143,7 +143,7 @@ body {
 
 body {
   margin: 0;
-  background-image: url("./assets/background.webp");
+  background-image: url("./assets/images/background.webp");
   background-position: center center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -675,33 +675,33 @@ button {
 }
 
 .face-button-label.face-play {
-  background-image: url("./assets/play.svg");
+  background-image: url("./assets/images/play.svg");
 }
 
 .face-button-label.face-undone-play {
-  background-image: url("./assets/undone-play.svg");
+  background-image: url("./assets/images/undone-play.svg");
 }
 
 .face-button-label.face-press {
-  background-image: url("./assets/press.svg");
+  background-image: url("./assets/images/press.svg");
 }
 
 .face-button-label.face-undone-press {
-  background-image: url("./assets/undone-press.svg");
+  background-image: url("./assets/images/undone-press.svg");
 }
 
 .face-button-label.face-win {
-  background-image: url("./assets/win.svg");
+  background-image: url("./assets/images/win.svg");
 }
 
 .face-button-label.face-lose {
-  background-image: url("./assets/lose.svg");
+  background-image: url("./assets/images/lose.svg");
 }
 
 .face-button-label.is-eye {
   border: none;
   border-radius: 0;
-  background: center / contain no-repeat url("./assets/eye.svg");
+  background: center / contain no-repeat url("./assets/images/eye.svg");
   box-shadow: none;
 }
 
@@ -856,7 +856,7 @@ button {
   width: 8px;
   height: 11px;
   transform: translate(-50%, -50%);
-  background: center / contain no-repeat url("./assets/flag.svg");
+  background: center / contain no-repeat url("./assets/images/flag.svg");
   z-index: 5;
 }
 
@@ -882,7 +882,7 @@ button {
   width: 8.71px;
   height: 8.71px;
   transform: translate(-50%, -50%);
-  background: center / contain no-repeat url("./assets/mine.svg");
+  background: center / contain no-repeat url("./assets/images/mine.svg");
   z-index: 4;
 }
 
