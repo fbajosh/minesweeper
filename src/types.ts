@@ -84,6 +84,7 @@ export interface CustomBoardSettings {
 export interface AppSettings {
   language: LanguageCode;
   theme: ThemeName;
+  soundEnabled: boolean;
   selectedDifficultyLevel: DifficultyLevel;
   customBoard: CustomBoardSettings;
   interaction: InteractionSettings;

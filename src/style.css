@@ -155,6 +155,11 @@ body {
   text-rendering: geometricPrecision;
 }
 
+:root[data-theme="mogged"] body {
+  background-image: none;
+  background-color: #080808;
+}
+
 button,
 input,
 select {
@@ -169,7 +174,23 @@ button {
 .desktop-shell {
   min-height: 100vh;
   position: relative;
+  z-index: 1;
   padding: 0;
+}
+
+.theme-background {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 220ms ease;
+  z-index: 0;
+}
+
+:root[data-theme="mogged"] .theme-background {
+  opacity: 1;
 }
 
 .xp-window {
@@ -686,6 +707,8 @@ button {
 .board-stage {
   width: 100%;
   max-width: none;
+  display: flex;
+  justify-content: center;
 }
 
 .board-viewport {
@@ -695,6 +718,7 @@ button {
   background: var(--board-bg);
   scrollbar-width: thin;
   max-width: 100%;
+  margin: 0 auto;
 }
 
 .board-viewport.is-pannable {

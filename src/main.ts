@@ -38,6 +38,12 @@ import { saveGameRecord } from "./storage";
 import { readStoredSettings, readStoredStats, recordFinishedGame, statsBucketForConfig, writeStoredSettings, writeStoredStats } from "./stats";
 import { applyTheme } from "./theme";
 import { computeTrainerModel } from "./trainer";
+import { createMoggedBackground } from "./mogged-background";
+import flaggedSoundUrl from "./assets/sounds/flagged.mp3";
+import loseSoundUrl from "./assets/sounds/lose.mp3";
+import openSoundUrl from "./assets/sounds/open.mp3";
+import resetSoundUrl from "./assets/sounds/reset.mp3";
+import winSoundUrl from "./assets/sounds/win.mp3";
 import type {
   AppSettings,
   BoardConfig,
@@ -116,6 +122,7 @@ interface WindowResizeSession {
 
 const COUNTER_MARQUEE_STEP_MS = 180;
 const MIN_DESKTOP_BOARD_WIDTH = 400;
+const BUILD_VERSION = import.meta.env.VITE_BUILD_VERSION?.trim() || "dev";
 
 function requireElement<T extends Element>(selector: string): T {
   const element = document.querySelector<T>(selector);
@@ -338,6 +345,20 @@ class MinesweeperApp {
   private readonly controlsDialog = requireElement<HTMLDialogElement>("#controls-dialog");
 
   private readonly aboutDialog = requireElement<HTMLDialogElement>("#about-dialog");
+
+  private readonly aboutVersion = requireElement<HTMLElement>("#about-version");
+
+  private readonly themeBackground = requireElement<HTMLCanvasElement>("#theme-background");
+
+  private readonly moggedBackground = createMoggedBackground(this.themeBackground);
+
+  private readonly sounds = {
+    flagged: this.createSound(flaggedSoundUrl),
+    lose: this.createSound(loseSoundUrl),
+    open: this.createSound(openSoundUrl),
+    reset: this.createSound(resetSoundUrl),
+    win: this.createSound(winSoundUrl),
+  };
 
   init(): void {
     this.settings = {
@@ -645,6 +666,24 @@ class MinesweeperApp {
     };
   }
 
+  private createSound(url: string): HTMLAudioElement {
+    const audio = new Audio(url);
+    audio.preload = "auto";
+    return audio;
+  }
+
+  private playSound(sound: keyof MinesweeperApp["sounds"]): void {
+    if (!this.settings.soundEnabled) {
+      return;
+    }
+
+    const audio = this.sounds[sound];
+    audio.currentTime = 0;
+    void audio.play().catch(() => {
+      // Ignore playback failures, usually due to browser autoplay policy.
+    });
+  }
+
   private handleMenuAction(action: string | undefined): void {
     if (!action) {
       return;
@@ -698,6 +737,13 @@ class MinesweeperApp {
       return;
     }
 
+    if (action === "toggle-sound") {
+      this.settings.soundEnabled = !this.settings.soundEnabled;
+      this.persistSettings();
+      this.renderMenuState();
+      return;
+    }
+
     if (action === "open-settings-dialog") {
       this.renderSettingsDialog();
       this.closeMenus();
@@ -713,6 +759,7 @@ class MinesweeperApp {
 
     if (action === "open-about-dialog") {
       this.closeMenus();
+      this.renderAboutDialog();
       this.aboutDialog.showModal();
     }
   }
@@ -1154,6 +1201,7 @@ class MinesweeperApp {
     this.trainerOverlayVisible = false;
     this.logAction(actionType, gesture, pointerType, index, changedIndices, now);
     this.refreshTrainerModel();
+    this.playActionSound(actionType, index, undoSnapshot.game);
 
     if (this.game.status === "won" || this.game.status === "lost") {
       this.finalizeSession();
@@ -1286,6 +1334,7 @@ class MinesweeperApp {
     this.rebuildBoard();
     this.refreshTrainerModel();
     this.renderAll();
+    this.playSound("reset");
   }
 
   private restartGame(): void {
@@ -1305,6 +1354,7 @@ class MinesweeperApp {
     this.rebuildBoard();
     this.refreshTrainerModel();
     this.renderAll();
+    this.playSound("reset");
   }
 
   private refreshTrainerModel(): void {
@@ -1321,6 +1371,29 @@ class MinesweeperApp {
       maxComponentSize: 32,
       maxSearchNodes: 2000000,
     });
+  }
+
+  private playActionSound(actionType: GameActionType, index: number, previousGame: GameState): void {
+    if (this.game.status === "lost") {
+      this.playSound("lose");
+      return;
+    }
+
+    if (this.game.status === "won") {
+      this.playSound("win");
+      return;
+    }
+
+    if (actionType === "flag") {
+      if (!previousGame.cells[index]?.flagged && this.game.cells[index]?.flagged) {
+        this.playSound("flagged");
+      }
+      return;
+    }
+
+    if (actionType === "open" || actionType === "chord") {
+      this.playSound("open");
+    }
   }
 
   private undoLastMove(): void {
@@ -1659,6 +1732,10 @@ class MinesweeperApp {
     }
   }
 
+  private renderAboutDialog(): void {
+    this.aboutVersion.textContent = translate(this.settings.language, "about.version", { version: BUILD_VERSION });
+  }
+
   private renderBestTimesDialog(): void {
     const language = this.settings.language;
     const bucket = statsBucketForConfig(this.stats, this.config);
@@ -1732,6 +1809,10 @@ class MinesweeperApp {
       entry.dataset.checked = String(this.settings.trainer.enabled);
     });
 
+    document.querySelectorAll<HTMLElement>(".menu-entry-checkbox[data-menu-action='toggle-sound']").forEach((entry) => {
+      entry.dataset.checked = String(this.settings.soundEnabled);
+    });
+
     document.querySelectorAll<HTMLButtonElement>(".menu-entry[data-menu-action='undo-move']").forEach((entry) => {
       entry.disabled = this.game.status === "won";
     });
@@ -1765,6 +1846,7 @@ class MinesweeperApp {
 
   private applyTheme(): void {
     applyTheme(this.settings.theme);
+    this.moggedBackground.setEnabled(this.settings.theme === "mogged");
   }
 
   private applyLanguage(): void {
@@ -1772,6 +1854,7 @@ class MinesweeperApp {
     applyTranslations(this.settings.language);
     document.title = `${translate(this.settings.language, "app.title")} ${translate(this.settings.language, "app.subtitle")}`;
     this.hoverHint.textContent = translate(this.settings.language, "controls.hoverHint");
+    this.renderAboutDialog();
   }
 
   private persistSettings(): void {

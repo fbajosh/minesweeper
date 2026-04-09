@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
+    <canvas class="theme-background" id="theme-background" aria-hidden="true"></canvas>
     <main class="desktop-shell">
       <section class="xp-window app-window" id="app-window" aria-label="Minesweeper window">
         <header class="title-bar" id="title-bar">
@@ -80,6 +81,9 @@
                     <button class="menu-entry" data-menu-action="open-custom-dialog" type="button" data-i18n="menu.custom">Custom...</button>
                   </div>
                 </div>
+                <button class="menu-entry menu-entry-checkbox" data-menu-action="toggle-sound" type="button" data-i18n="menu.sound">
+                  Sound
+                </button>
                 <div class="menu-separator"></div>
                 <button class="menu-entry" data-menu-action="open-best-times-dialog" type="button" data-i18n="menu.bestTimes">Best Times</button>
                 <button class="menu-entry" data-menu-action="open-statistics-dialog" type="button" data-i18n="menu.statistics">Statistics</button>
@@ -316,6 +320,7 @@
           <p class="dialog-copy" data-i18n="about.credits">
             Hosted at appmogged.com/minesweeper. Built with TypeScript and Vite for local development and static deployment.
           </p>
+          <p class="dialog-copy" id="about-version">Build version: dev</p>
         </div>
         <footer class="dialog-footer">
           <button class="dialog-button dialog-button-primary" type="button" data-dialog-close="about-dialog" data-i18n="controls.close">Close</button>

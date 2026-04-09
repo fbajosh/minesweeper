@@ -54,6 +54,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Set build version
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf 'VITE_BUILD_VERSION=%s\n' "$(date -u +'%y%m%d.%H%M%S')" >> "$GITHUB_ENV"
+
       - name: Build site
         run: npm run build
 

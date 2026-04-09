@@ -51,6 +51,7 @@ export const DEFAULT_CUSTOM_BOARD = {
 export const DEFAULT_SETTINGS: AppSettings = {
   language: DEFAULT_LANGUAGE,
   theme: DEFAULT_THEME,
+  soundEnabled: true,
   selectedDifficultyLevel: 2,
   customBoard: DEFAULT_CUSTOM_BOARD,
   interaction: DEFAULT_INTERACTION_SETTINGS,

@@ -19,6 +19,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       restart: "Restart game",
       undo: "Undo",
       difficulty: "Difficulty",
+      sound: "Sound",
       custom: "Custom...",
       bestTimes: "Best Times",
       statistics: "Statistics",
@@ -124,6 +125,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
         "This build recreates classic Minesweeper in a Windows XP shell, adds mobile-first controls, detailed local stats, and trainer probability plumbing.",
       credits:
         "Hosted at appmogged.com/minesweeper. Built with TypeScript and Vite for local development and static deployment.",
+      version: "Build version: {version}",
     },
     help: {
       controls:
@@ -145,6 +147,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       restart: "Reiniciar partida",
       undo: "Deshacer",
       difficulty: "Dificultad",
+      sound: "Sonido",
       custom: "Personalizado...",
       bestTimes: "Mejores tiempos",
       statistics: "Estadisticas",
@@ -250,6 +253,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
         "Esta version recrea el Buscaminas clasico en una carcasa de Windows XP y agrega controles pensados para movil, estadisticas locales detalladas y la base del entrenador de probabilidades.",
       credits:
         "Alojado en appmogged.com/minesweeper. Construido con TypeScript y Vite para desarrollo local y despliegue estatico.",
+      version: "Version de compilacion: {version}",
     },
     help: {
       controls:
