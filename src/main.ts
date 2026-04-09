@@ -182,6 +182,14 @@ function cloneGameState(state: GameState): GameState {
 }
 
 function trainerMix(probability: number): string {
+  if (probability <= 0) {
+    return "var(--trainer-zero)";
+  }
+
+  if (probability >= 1) {
+    return "var(--trainer-certain)";
+  }
+
   const safeWeight = Math.round((1 - probability) * 100);
   const riskWeight = Math.round(probability * 100);
   return `color-mix(in srgb, var(--trainer-safe) ${safeWeight}%, var(--trainer-risk) ${riskWeight}%)`;

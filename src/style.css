@@ -120,6 +120,8 @@
   --text-muted: #5b5b5b;
   --trainer-safe: rgba(44, 164, 60, 0.52);
   --trainer-risk: rgba(224, 60, 60, 0.7);
+  --trainer-zero: rgba(132, 206, 255, 0.7);
+  --trainer-certain: rgba(120, 0, 0, 0.82);
   --trainer-text: #111111;
   --surface-raised: #c0c0c0;
   --surface-raised-dark: #808080;
