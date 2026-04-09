@@ -376,7 +376,6 @@ class MinesweeperApp {
     this.settings = {
       ...DEFAULT_SETTINGS,
       ...this.settings,
-      theme: DEFAULT_THEME,
     };
 
     this.config = configForPreset(this.settings.selectedDifficultyLevel);
@@ -438,6 +437,11 @@ class MinesweeperApp {
     this.titleCloseButton.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
+      if (this.settings.theme === "mogged") {
+        this.settings.theme = DEFAULT_THEME;
+        this.persistSettings();
+        this.applyTheme();
+      }
       this.newGame(this.config);
     });
 
