@@ -13,7 +13,7 @@
   <body>
     <main class="desktop-shell">
       <section class="xp-window app-window" id="app-window" aria-label="Minesweeper window">
-        <header class="title-bar">
+        <header class="title-bar" id="title-bar">
           <div class="title-bar-left">
             <span class="title-icon-shell" aria-hidden="true">
               <img class="title-icon" src="./assets/icon.webp" alt="" />
@@ -177,6 +177,8 @@
             <div class="footer-text" id="hover-hint" data-i18n="controls.hoverHint">Hover to inspect. Shift+click chords.</div>
           </div>
         </section>
+
+        <div class="window-resize-handle" id="window-resize-handle" aria-hidden="true"></div>
       </section>
     </main>
 

@@ -92,6 +92,21 @@ interface CounterMarquee {
   startedAtMs: number;
 }
 
+interface WindowDragSession {
+  pointerId: number;
+  startX: number;
+  startY: number;
+  startLeft: number;
+  startTop: number;
+}
+
+interface WindowResizeSession {
+  pointerId: number;
+  startX: number;
+  startY: number;
+  startWidth: number;
+}
+
 const COUNTER_MARQUEE_STEP_MS = 180;
 
 function requireElement<T extends Element>(selector: string): T {
@@ -127,6 +142,10 @@ function formatDuration(ms: number | null): string {
   }
 
   return `${(ms / 1000).toFixed(ms < 10000 ? 1 : 0)}s`;
+}
+
+function clampValue(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
 }
 
 function trainerMix(probability: number): string {
@@ -188,6 +207,16 @@ class MinesweeperApp {
 
   private counterMarquee: CounterMarquee | null = null;
 
+  private windowDragSession: WindowDragSession | null = null;
+
+  private windowResizeSession: WindowResizeSession | null = null;
+
+  private desktopWindowWidth: number | null = null;
+
+  private windowLeft = 0;
+
+  private windowTop = 0;
+
   private displayColumns = this.config.columns;
 
   private displayRows = this.config.rows;
@@ -198,7 +227,11 @@ class MinesweeperApp {
 
   private readonly appWindow = requireElement<HTMLElement>("#app-window");
 
+  private readonly titleBar = requireElement<HTMLElement>("#title-bar");
+
   private readonly boardShell = requireElement<HTMLElement>("#board-shell");
+
+  private readonly scorePanel = requireElement<HTMLElement>(".score-panel");
 
   private readonly boardStage = requireElement<HTMLElement>(".board-stage");
 
@@ -229,6 +262,8 @@ class MinesweeperApp {
   private readonly titleMaximizeButton = requireElement<HTMLButtonElement>("#title-maximize");
 
   private readonly titleCloseButton = requireElement<HTMLButtonElement>("#title-close");
+
+  private readonly windowResizeHandle = requireElement<HTMLElement>("#window-resize-handle");
 
   private readonly difficultyPill = requireElement<HTMLElement>("#difficulty-pill");
 
@@ -301,6 +336,9 @@ class MinesweeperApp {
     this.applyTheme();
     this.rebuildBoard();
     this.renderAll();
+    this.syncDesktopWindowFrame(true);
+    this.syncBoardMetrics();
+    this.renderAll();
     this.timerHandle = window.setInterval(() => this.renderScoreboard(), TIMER_TICK_MS);
   }
 
@@ -349,6 +387,27 @@ class MinesweeperApp {
       event.preventDefault();
       event.stopPropagation();
       this.newGame(this.config);
+    });
+
+    this.titleBar.addEventListener("pointerdown", (event) => this.handleWindowDragStart(event));
+    this.titleBar.addEventListener("pointermove", (event) => this.handleWindowDragMove(event));
+    this.titleBar.addEventListener("pointerup", (event) => this.handleWindowDragEnd(event));
+    this.titleBar.addEventListener("pointercancel", (event) => this.handleWindowDragEnd(event));
+    this.windowResizeHandle.addEventListener("pointerdown", (event) => this.handleWindowResizeStart(event));
+    this.windowResizeHandle.addEventListener("pointermove", (event) => this.handleWindowResizeMove(event));
+    this.windowResizeHandle.addEventListener("pointerup", (event) => this.handleWindowResizeEnd(event));
+    this.windowResizeHandle.addEventListener("pointercancel", (event) => this.handleWindowResizeEnd(event));
+    document.addEventListener("pointermove", (event) => {
+      this.handleWindowDragMove(event);
+      this.handleWindowResizeMove(event);
+    });
+    document.addEventListener("pointerup", (event) => {
+      this.handleWindowDragEnd(event);
+      this.handleWindowResizeEnd(event);
+    });
+    document.addEventListener("pointercancel", (event) => {
+      this.handleWindowDragEnd(event);
+      this.handleWindowResizeEnd(event);
     });
 
     document.addEventListener("click", (event) => {
@@ -552,6 +611,8 @@ class MinesweeperApp {
     });
 
     window.addEventListener("resize", () => {
+      this.clearWindowPointerSessions();
+      this.syncDesktopWindowFrame(true);
       this.syncBoardMetrics();
       this.renderAll();
     });
@@ -629,6 +690,189 @@ class MinesweeperApp {
       this.closeMenus();
       this.aboutDialog.showModal();
     }
+  }
+
+  private isDesktopWindowMode(): boolean {
+    return window.innerWidth > 640;
+  }
+
+  private getDesktopWindowInsets(): { horizontal: number; top: number; bottom: number } {
+    return {
+      horizontal: 12,
+      top: 10,
+      bottom: 12,
+    };
+  }
+
+  private getMinimumDesktopWindowWidth(): number {
+    const boardShellStyles = window.getComputedStyle(this.boardShell);
+    const horizontalChrome =
+      parseFloat(boardShellStyles.paddingLeft) +
+      parseFloat(boardShellStyles.paddingRight) +
+      parseFloat(boardShellStyles.borderLeftWidth) +
+      parseFloat(boardShellStyles.borderRightWidth);
+
+    return Math.max(248, Math.ceil(this.scorePanel.scrollWidth + horizontalChrome));
+  }
+
+  private getMaximumDesktopWindowWidth(minWidth: number): number {
+    const insets = this.getDesktopWindowInsets();
+    const appBounds = this.appWindow.getBoundingClientRect();
+    const stageBounds = this.boardStage.getBoundingClientRect();
+    const portrait = window.innerHeight > window.innerWidth;
+    const rotatedBoard = portrait && this.config.columns > this.config.rows;
+    const displayColumns = rotatedBoard ? this.config.rows : this.config.columns;
+    const displayRows = rotatedBoard ? this.config.columns : this.config.rows;
+    const maxFitColumns = rotatedBoard ? MAX_AUTO_FIT_ROWS : MAX_AUTO_FIT_COLUMNS;
+    const maxFitRows = rotatedBoard ? MAX_AUTO_FIT_COLUMNS : MAX_AUTO_FIT_ROWS;
+    const fitColumns = Math.min(displayColumns, maxFitColumns);
+    const fitRows = Math.min(displayRows, maxFitRows);
+    const baseCellSize = 16;
+    const maxScale = portrait ? 3.2 : 1.75;
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+    const shellBottomInset = window.innerWidth < 560 ? 2 : 4;
+    const stageTopWithinWindow = stageBounds.top - appBounds.top;
+    const availableHeight = Math.max(180, Math.floor(viewportHeight - (insets.top + stageTopWithinWindow) - shellBottomInset));
+    const fitHeight = fitRows * baseCellSize;
+    const baseWidth = displayColumns * baseCellSize;
+    const scaleByHeight = Math.max(0.5, Math.min(maxScale, availableHeight / fitHeight));
+    const usefulStageWidth = Math.round(baseWidth * scaleByHeight);
+    const chromeWidth = Math.max(0, Math.ceil(appBounds.width - stageBounds.width));
+    const viewportMaxWidth = Math.max(minWidth, window.innerWidth - insets.horizontal * 2);
+
+    return Math.max(minWidth, Math.min(viewportMaxWidth, chromeWidth + usefulStageWidth));
+  }
+
+  private syncDesktopWindowFrame(recenter: boolean): void {
+    const desktopMode = this.isDesktopWindowMode();
+    this.appWindow.classList.toggle("is-floating-window", desktopMode);
+
+    if (!desktopMode) {
+      this.appWindow.style.width = "";
+      this.appWindow.style.left = "";
+      this.appWindow.style.top = "";
+      return;
+    }
+
+    const insets = this.getDesktopWindowInsets();
+    const minWidth = this.getMinimumDesktopWindowWidth();
+    const measuredWidth = Math.ceil(this.appWindow.getBoundingClientRect().width);
+    if (this.desktopWindowWidth === null) {
+      this.desktopWindowWidth = Math.max(minWidth, measuredWidth || minWidth);
+    }
+
+    const maxWidth = this.getMaximumDesktopWindowWidth(minWidth);
+    this.desktopWindowWidth = clampValue(this.desktopWindowWidth, minWidth, maxWidth);
+    this.appWindow.style.width = `${Math.round(this.desktopWindowWidth)}px`;
+
+    const measuredHeight = Math.ceil(this.appWindow.getBoundingClientRect().height);
+    const maxLeft = Math.max(insets.horizontal, window.innerWidth - this.desktopWindowWidth - insets.horizontal);
+    const maxTop = Math.max(insets.top, window.innerHeight - measuredHeight - insets.bottom);
+
+    if (recenter) {
+      this.windowLeft = Math.max(insets.horizontal, Math.round((window.innerWidth - this.desktopWindowWidth) / 2));
+      this.windowTop = insets.top;
+    } else {
+      this.windowLeft = clampValue(this.windowLeft, insets.horizontal, maxLeft);
+      this.windowTop = clampValue(this.windowTop, insets.top, maxTop);
+    }
+
+    this.appWindow.style.left = `${Math.round(this.windowLeft)}px`;
+    this.appWindow.style.top = `${Math.round(this.windowTop)}px`;
+  }
+
+  private handleWindowDragStart(event: PointerEvent): void {
+    if (!this.isDesktopWindowMode() || event.pointerType !== "mouse" || event.button !== 0) {
+      return;
+    }
+
+    const target = event.target as HTMLElement | null;
+    if (target?.closest(".title-buttons")) {
+      return;
+    }
+
+    event.preventDefault();
+    this.closeMenus();
+    this.clearWindowPointerSessions();
+
+    this.windowDragSession = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startLeft: this.windowLeft,
+      startTop: this.windowTop,
+    };
+    this.titleBar.setPointerCapture(event.pointerId);
+  }
+
+  private handleWindowDragMove(event: PointerEvent): void {
+    if (!this.windowDragSession || this.windowDragSession.pointerId !== event.pointerId) {
+      return;
+    }
+
+    event.preventDefault();
+    const deltaX = event.clientX - this.windowDragSession.startX;
+    const deltaY = event.clientY - this.windowDragSession.startY;
+    this.windowLeft = this.windowDragSession.startLeft + deltaX;
+    this.windowTop = this.windowDragSession.startTop + deltaY;
+    this.syncDesktopWindowFrame(false);
+  }
+
+  private handleWindowDragEnd(event: PointerEvent): void {
+    if (!this.windowDragSession || this.windowDragSession.pointerId !== event.pointerId) {
+      return;
+    }
+
+    if (this.titleBar.hasPointerCapture(event.pointerId)) {
+      this.titleBar.releasePointerCapture(event.pointerId);
+    }
+    this.windowDragSession = null;
+  }
+
+  private handleWindowResizeStart(event: PointerEvent): void {
+    if (!this.isDesktopWindowMode() || event.pointerType !== "mouse" || event.button !== 0) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    this.closeMenus();
+    this.clearWindowPointerSessions();
+    this.syncDesktopWindowFrame(false);
+
+    this.windowResizeSession = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startWidth: this.desktopWindowWidth ?? Math.ceil(this.appWindow.getBoundingClientRect().width),
+    };
+    this.windowResizeHandle.setPointerCapture(event.pointerId);
+  }
+
+  private handleWindowResizeMove(event: PointerEvent): void {
+    if (!this.windowResizeSession || this.windowResizeSession.pointerId !== event.pointerId) {
+      return;
+    }
+
+    event.preventDefault();
+    const deltaX = event.clientX - this.windowResizeSession.startX;
+    const deltaY = event.clientY - this.windowResizeSession.startY;
+    const delta = Math.abs(deltaX) >= Math.abs(deltaY) ? deltaX : deltaY;
+    this.desktopWindowWidth = this.windowResizeSession.startWidth + delta;
+    this.syncDesktopWindowFrame(false);
+    this.syncBoardMetrics();
+    this.renderAll();
+  }
+
+  private handleWindowResizeEnd(event: PointerEvent): void {
+    if (!this.windowResizeSession || this.windowResizeSession.pointerId !== event.pointerId) {
+      return;
+    }
+
+    if (this.windowResizeHandle.hasPointerCapture(event.pointerId)) {
+      this.windowResizeHandle.releasePointerCapture(event.pointerId);
+    }
+    this.windowResizeSession = null;
   }
 
   private handleBoardPointerDown(event: PointerEvent): void {
@@ -1070,12 +1314,17 @@ class MinesweeperApp {
     const maxFitColumns = this.rotatedBoard ? MAX_AUTO_FIT_ROWS : MAX_AUTO_FIT_COLUMNS;
     const maxFitRows = this.rotatedBoard ? MAX_AUTO_FIT_COLUMNS : MAX_AUTO_FIT_ROWS;
     const stageBounds = this.boardStage.getBoundingClientRect();
+    const appBounds = this.appWindow.getBoundingClientRect();
     const fitColumns = Math.min(this.displayColumns, maxFitColumns);
     const fitRows = Math.min(this.displayRows, maxFitRows);
     const availableWidth = Math.max(160, Math.floor(stageBounds.width));
     const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
     const shellBottomInset = window.innerWidth < 560 ? 2 : 4;
-    const availableHeight = Math.max(180, Math.floor(viewportHeight - stageBounds.top - shellBottomInset));
+    const stageTopWithinWindow = stageBounds.top - appBounds.top;
+    const stageTopReference = this.isDesktopWindowMode()
+      ? this.getDesktopWindowInsets().top + stageTopWithinWindow
+      : stageBounds.top;
+    const availableHeight = Math.max(180, Math.floor(viewportHeight - stageTopReference - shellBottomInset));
 
     const baseWidth = this.displayColumns * baseCellSize;
     const baseHeight = this.displayRows * baseCellSize;
@@ -1466,6 +1715,7 @@ class MinesweeperApp {
 
   private minimizeWindow(): void {
     this.closeMenus();
+    this.clearWindowPointerSessions();
     this.windowMinimized = true;
     this.appWindow.classList.add("is-minimized");
   }
@@ -1473,6 +1723,7 @@ class MinesweeperApp {
   private restoreWindow(): void {
     this.windowMinimized = false;
     this.appWindow.classList.remove("is-minimized");
+    this.syncDesktopWindowFrame(false);
   }
 
   private setTrainerOverlayVisible(visible: boolean): void {
@@ -1524,6 +1775,22 @@ class MinesweeperApp {
     this.pointerSession = null;
     this.faceButton.classList.remove("is-pressed");
     this.renderScoreboard();
+  }
+
+  private clearWindowPointerSessions(): void {
+    if (this.windowDragSession) {
+      if (this.titleBar.hasPointerCapture(this.windowDragSession.pointerId)) {
+        this.titleBar.releasePointerCapture(this.windowDragSession.pointerId);
+      }
+      this.windowDragSession = null;
+    }
+
+    if (this.windowResizeSession) {
+      if (this.windowResizeHandle.hasPointerCapture(this.windowResizeSession.pointerId)) {
+        this.windowResizeHandle.releasePointerCapture(this.windowResizeSession.pointerId);
+      }
+      this.windowResizeSession = null;
+    }
   }
 
   private startCounterMarquee(message: string): void {
