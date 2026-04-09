@@ -65,6 +65,12 @@ interface ActiveSession {
   createdAtIso: string;
   actions: GameActionRecord[];
   persisted: boolean;
+  statsLocked: boolean;
+}
+
+interface UndoSnapshot {
+  game: GameState;
+  actionCount: number;
 }
 
 interface PendingTap {
@@ -149,6 +155,14 @@ function clampValue(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
+function cloneGameState(state: GameState): GameState {
+  return {
+    ...state,
+    config: { ...state.config },
+    cells: state.cells.map((cell) => ({ ...cell })),
+  };
+}
+
 function trainerMix(probability: number): string {
   const safeWeight = Math.round((1 - probability) * 100);
   const riskWeight = Math.round(probability * 100);
@@ -187,6 +201,8 @@ class MinesweeperApp {
   };
 
   private activeSession: ActiveSession | null = null;
+
+  private undoStack: UndoSnapshot[] = [];
 
   private cellElements: CellElements[] = [];
 
@@ -624,6 +640,7 @@ class MinesweeperApp {
       createdAtIso: new Date(this.game.createdAtMs).toISOString(),
       actions: [],
       persisted: false,
+      statsLocked: false,
     };
   }
 
@@ -641,6 +658,12 @@ class MinesweeperApp {
     if (action === "restart-game") {
       this.closeMenus();
       this.restartGame();
+      return;
+    }
+
+    if (action === "undo-move") {
+      this.closeMenus();
+      this.undoLastMove();
       return;
     }
 
@@ -1099,6 +1122,10 @@ class MinesweeperApp {
     pointerType: PointerKind,
   ): void {
     this.clearCounterMarquee();
+    const undoSnapshot: UndoSnapshot = {
+      game: cloneGameState(this.game),
+      actionCount: this.activeSession?.actions.length ?? 0,
+    };
     const now = Date.now();
     let acted = false;
     let changedIndices: number[] = [];
@@ -1122,6 +1149,7 @@ class MinesweeperApp {
       return;
     }
 
+    this.undoStack.push(undoSnapshot);
     this.trainerOverlayVisible = false;
     this.logAction(actionType, gesture, pointerType, index, changedIndices, now);
     this.refreshTrainerModel();
@@ -1212,7 +1240,7 @@ class MinesweeperApp {
   }
 
   private finalizeSession(): void {
-    if (!this.activeSession || this.activeSession.persisted || this.activeSession.actions.length === 0) {
+    if (!this.activeSession || this.activeSession.persisted || this.activeSession.statsLocked || this.activeSession.actions.length === 0) {
       return;
     }
 
@@ -1248,6 +1276,7 @@ class MinesweeperApp {
     this.config = config;
     this.game = createGame(config);
     this.activeSession = this.createActiveSession();
+    this.undoStack = [];
     this.statusOverrideKey = null;
     this.hoveredIndex = null;
     this.trainerOverlayVisible = false;
@@ -1266,6 +1295,7 @@ class MinesweeperApp {
     this.config = sourceGame.config;
     this.game = createRestartGame(sourceGame);
     this.activeSession = this.createActiveSession();
+    this.undoStack = [];
     this.statusOverrideKey = null;
     this.hoveredIndex = null;
     this.trainerOverlayVisible = false;
@@ -1290,6 +1320,34 @@ class MinesweeperApp {
       maxComponentSize: 32,
       maxSearchNodes: 2000000,
     });
+  }
+
+  private undoLastMove(): void {
+    if (this.game.status === "won") {
+      this.renderAll();
+      return;
+    }
+
+    const snapshot = this.undoStack.pop();
+    if (!snapshot) {
+      this.renderAll();
+      return;
+    }
+
+    this.clearPendingTap();
+    this.clearPointerSession();
+    this.clearCounterMarquee();
+    this.config = { ...snapshot.game.config };
+    this.game = cloneGameState(snapshot.game);
+    this.activeSession ??= this.createActiveSession();
+    this.activeSession.statsLocked = true;
+    this.activeSession.actions.length = snapshot.actionCount;
+    this.statusOverrideKey = null;
+    this.hoveredIndex = null;
+    this.trainerOverlayVisible = false;
+    this.rebuildBoard();
+    this.refreshTrainerModel();
+    this.renderAll();
   }
 
   private rebuildBoard(): void {
@@ -1398,6 +1456,7 @@ class MinesweeperApp {
 
   private renderScoreboard(): void {
     const marqueeFrame = this.getCounterMarqueeFrame(Date.now());
+    const usingUndoneFaces = Boolean(this.activeSession?.statsLocked);
 
     if (marqueeFrame) {
       this.mineCounterDisplay.classList.add("is-marquee");
@@ -1432,10 +1491,10 @@ class MinesweeperApp {
       !this.pointerSession.dragging &&
       (this.pointerSession.pointerType !== "mouse" || this.pointerSession.hoveringOrigin)
     ) {
-      this.faceLabel.classList.add("is-face-asset", "face-press");
+      this.faceLabel.classList.add("is-face-asset", usingUndoneFaces ? "face-undone-press" : "face-press");
       this.faceButton.setAttribute("aria-label", translate(this.settings.language, "controls.restart"));
     } else {
-      this.faceLabel.classList.add("is-face-asset", "face-play");
+      this.faceLabel.classList.add("is-face-asset", usingUndoneFaces ? "face-undone-play" : "face-play");
       this.faceButton.setAttribute("aria-label", translate(this.settings.language, "controls.restart"));
     }
   }
@@ -1671,6 +1730,10 @@ class MinesweeperApp {
       entry.dataset.checked = String(this.settings.trainer.enabled);
     });
 
+    document.querySelectorAll<HTMLButtonElement>(".menu-entry[data-menu-action='undo-move']").forEach((entry) => {
+      entry.disabled = this.game.status === "won";
+    });
+
     document.querySelectorAll<HTMLElement>("[data-difficulty-level]").forEach((entry) => {
       entry.dataset.checked = String(Number(entry.dataset.difficultyLevel) === this.settings.selectedDifficultyLevel);
       const level = Number(entry.dataset.difficultyLevel) as DifficultyLevel;
@@ -1778,10 +1841,12 @@ class MinesweeperApp {
   }
 
   private clearLongPressTimer(): void {
-    if (this.pointerSession?.holdTimerId !== null) {
-      window.clearTimeout(this.pointerSession.holdTimerId);
-      this.pointerSession.holdTimerId = null;
+    if (!this.pointerSession || this.pointerSession.holdTimerId === null) {
+      return;
     }
+
+    window.clearTimeout(this.pointerSession.holdTimerId);
+    this.pointerSession.holdTimerId = null;
   }
 
   private clearPressedState(): void {

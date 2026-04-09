@@ -443,6 +443,17 @@ button {
   color: #ffffff;
 }
 
+.menu-entry:disabled {
+  color: #7a7a7a;
+  background: transparent;
+}
+
+.menu-entry:disabled:hover,
+.menu-entry:disabled:focus-visible {
+  color: #7a7a7a;
+  background: transparent;
+}
+
 .menu-entry-checkbox[data-checked="true"]::before,
 .menu-entry-radio[data-checked="true"]::before {
   content: "✓";
@@ -619,8 +630,16 @@ button {
   background-image: url("./assets/play.svg");
 }
 
+.face-button-label.face-undone-play {
+  background-image: url("./assets/undone-play.svg");
+}
+
 .face-button-label.face-press {
   background-image: url("./assets/press.svg");
+}
+
+.face-button-label.face-undone-press {
+  background-image: url("./assets/undone-press.svg");
 }
 
 .face-button-label.face-win {
