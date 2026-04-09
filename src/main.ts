@@ -85,6 +85,7 @@ interface PointerSession {
   dragging: boolean;
   longPressTriggered: boolean;
   holdTimerId: number | null;
+  hoveringOrigin: boolean;
 }
 
 interface CounterMarquee {
@@ -905,6 +906,7 @@ class MinesweeperApp {
       dragging: false,
       longPressTriggered: false,
       holdTimerId: null,
+      hoveringOrigin: true,
     };
 
     cellButton.classList.add("is-pressing");
@@ -944,6 +946,15 @@ class MinesweeperApp {
     const deltaY = event.clientY - this.pointerSession.startY;
     const distance = Math.hypot(deltaX, deltaY);
     const isPannable = this.boardViewport.classList.contains("is-pannable");
+
+    if (this.pointerSession.pointerType === "mouse" && !this.pointerSession.dragging) {
+      const hoveringOrigin = this.isPointerOverCellIndex(event, this.pointerSession.cellIndex);
+      if (hoveringOrigin !== this.pointerSession.hoveringOrigin) {
+        this.pointerSession.hoveringOrigin = hoveringOrigin;
+        this.renderScoreboard();
+        this.renderBoard();
+      }
+    }
 
     if (!isPannable) {
       return;
@@ -1008,7 +1019,11 @@ class MinesweeperApp {
     }
 
     if (pointerSession.pointerType === "mouse") {
+      const shouldActivate = this.isPointerOverCellIndex(event, index);
       this.clearPointerSession();
+      if (!shouldActivate) {
+        return;
+      }
       if (event.shiftKey) {
         this.performGameAction("chord", index, "shift-click", "mouse");
       } else if (!cell.revealed && !cell.flagged) {
@@ -1412,7 +1427,11 @@ class MinesweeperApp {
     } else if (this.settings.trainer.enabled) {
       this.faceLabel.classList.add("is-eye");
       this.faceButton.setAttribute("aria-label", translate(this.settings.language, "controls.showTrainerOverlay"));
-    } else if (this.pointerSession && !this.pointerSession.dragging) {
+    } else if (
+      this.pointerSession &&
+      !this.pointerSession.dragging &&
+      (this.pointerSession.pointerType !== "mouse" || this.pointerSession.hoveringOrigin)
+    ) {
       this.faceLabel.classList.add("is-face-asset", "face-press");
       this.faceButton.setAttribute("aria-label", translate(this.settings.language, "controls.restart"));
     } else {
@@ -1500,7 +1519,12 @@ class MinesweeperApp {
         button.classList.add("is-revealed");
       }
 
-      if (index === this.pointerSession?.cellIndex && !this.pointerSession.dragging && !this.pointerSession.longPressTriggered) {
+      if (
+        index === this.pointerSession?.cellIndex &&
+        !this.pointerSession.dragging &&
+        !this.pointerSession.longPressTriggered &&
+        (this.pointerSession.pointerType !== "mouse" || this.pointerSession.hoveringOrigin)
+      ) {
         button.classList.add("is-pressing");
       }
 
@@ -1847,6 +1871,16 @@ class MinesweeperApp {
   private getCellButtonFromEvent(event: Event): HTMLButtonElement | null {
     const target = event.target as HTMLElement | null;
     return (target?.closest(".cell") as HTMLButtonElement | null) ?? null;
+  }
+
+  private getCellButtonAtPoint(clientX: number, clientY: number): HTMLButtonElement | null {
+    const target = document.elementFromPoint(clientX, clientY) as HTMLElement | null;
+    return (target?.closest(".cell") as HTMLButtonElement | null) ?? null;
+  }
+
+  private isPointerOverCellIndex(event: PointerEvent, index: number): boolean {
+    const cellButton = this.getCellButtonAtPoint(event.clientX, event.clientY);
+    return Number(cellButton?.dataset.index) === index;
   }
 }
 

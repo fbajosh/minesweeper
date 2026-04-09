@@ -716,12 +716,9 @@ button {
   border-bottom: 2px solid var(--cell-hidden-shadow);
 }
 
-.cell.is-hidden.is-hovered::before {
-  content: "";
-  position: absolute;
-  inset: 2px;
-  border: 1px dotted var(--cell-hover);
-  z-index: 4;
+.cell.is-hidden.is-hovered {
+  outline: 1px dotted var(--cell-hover);
+  outline-offset: -3px;
 }
 
 .cell.is-hidden.is-pressing {
