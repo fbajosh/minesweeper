@@ -1,4 +1,5 @@
 import {
+  DEFAULT_THEME,
   DEFAULT_SETTINGS,
   DIRECTION_VECTORS,
   LANGUAGES,
@@ -38,7 +39,6 @@ import { saveGameRecord } from "./storage";
 import { readStoredSettings, readStoredStats, recordFinishedGame, statsBucketForConfig, writeStoredSettings, writeStoredStats } from "./stats";
 import { applyTheme } from "./theme";
 import { computeTrainerModel } from "./trainer";
-import { createMoggedBackground } from "./mogged-background";
 import flaggedSoundUrl from "./assets/sounds/flagged.mp3";
 import loseSoundUrl from "./assets/sounds/lose.mp3";
 import openSoundUrl from "./assets/sounds/open.mp3";
@@ -103,6 +103,16 @@ interface PointerSession {
 interface CounterMarquee {
   message: string;
   startedAtMs: number;
+}
+
+interface MoggedBackgroundController {
+  setEnabled(enabled: boolean): void;
+}
+
+interface MoggedThemeResources {
+  effect: HTMLAudioElement;
+  music: HTMLAudioElement;
+  background: MoggedBackgroundController;
 }
 
 interface WindowDragSession {
@@ -350,7 +360,9 @@ class MinesweeperApp {
 
   private readonly themeBackground = requireElement<HTMLCanvasElement>("#theme-background");
 
-  private readonly moggedBackground = createMoggedBackground(this.themeBackground);
+  private moggedThemeResources: MoggedThemeResources | null = null;
+
+  private moggedThemeResourcesPromise: Promise<MoggedThemeResources> | null = null;
 
   private readonly sounds = {
     flagged: this.createSound(flaggedSoundUrl),
@@ -364,6 +376,7 @@ class MinesweeperApp {
     this.settings = {
       ...DEFAULT_SETTINGS,
       ...this.settings,
+      theme: DEFAULT_THEME,
     };
 
     this.config = configForPreset(this.settings.selectedDifficultyLevel);
@@ -677,10 +690,121 @@ class MinesweeperApp {
       return;
     }
 
+    if (this.settings.theme === "mogged") {
+      void this.playMoggedSoundEffect();
+      return;
+    }
+
     const audio = this.sounds[sound];
     audio.currentTime = 0;
     void audio.play().catch(() => {
       // Ignore playback failures, usually due to browser autoplay policy.
+    });
+  }
+
+  private async ensureMoggedThemeResources(): Promise<MoggedThemeResources> {
+    if (this.moggedThemeResources) {
+      return this.moggedThemeResources;
+    }
+
+    if (this.moggedThemeResourcesPromise) {
+      return this.moggedThemeResourcesPromise;
+    }
+
+    this.moggedThemeResourcesPromise = (async () => {
+      const [
+        { default: moggEffectUrl },
+        { default: moggedMusicUrl },
+        { createMoggedBackground },
+      ] = await Promise.all([
+        import("./assets/sounds/mogg.mp3"),
+        import("./assets/sounds/appmogged-music.mp3"),
+        import("./mogged-background"),
+      ]);
+
+      const effect = new Audio(moggEffectUrl);
+      effect.preload = "auto";
+
+      const music = new Audio(moggedMusicUrl);
+      music.loop = true;
+      music.volume = 0.45;
+      music.preload = "auto";
+
+      const resources: MoggedThemeResources = {
+        effect,
+        music,
+        background: createMoggedBackground(this.themeBackground),
+      };
+
+      this.moggedThemeResources = resources;
+      this.moggedThemeResourcesPromise = null;
+      return resources;
+    })().catch((error) => {
+      this.moggedThemeResourcesPromise = null;
+      throw error;
+    });
+
+    return this.moggedThemeResourcesPromise;
+  }
+
+  private async playMoggedSoundEffect(): Promise<void> {
+    try {
+      const resources = await this.ensureMoggedThemeResources();
+      if (!this.settings.soundEnabled || this.settings.theme !== "mogged") {
+        return;
+      }
+
+      resources.effect.pause();
+      resources.effect.currentTime = 0;
+      void resources.effect.play().catch(() => {
+        // Ignore playback failures, usually due to browser autoplay policy.
+      });
+    } catch {
+      // Ignore lazy-load failures and keep the app usable.
+    }
+  }
+
+  private stopMoggedMusic(reset = true): void {
+    const music = this.moggedThemeResources?.music;
+    if (!music) {
+      return;
+    }
+
+    music.pause();
+    if (reset) {
+      music.currentTime = 0;
+    }
+  }
+
+  private syncThemeMedia(allowPlayback: boolean): void {
+    if (this.settings.theme !== "mogged") {
+      this.moggedThemeResources?.background.setEnabled(false);
+      this.stopMoggedMusic();
+      return;
+    }
+
+    if (!this.moggedThemeResources) {
+      void this.ensureMoggedThemeResources()
+        .then(() => this.syncThemeMedia(allowPlayback))
+        .catch(() => {
+          // Ignore lazy-load failures and fall back silently.
+        });
+      return;
+    }
+
+    this.moggedThemeResources.background.setEnabled(true);
+
+    if (!allowPlayback || !this.settings.soundEnabled || this.game.startedAtMs === null) {
+      this.stopMoggedMusic();
+      return;
+    }
+
+    if (!this.moggedThemeResources.music.paused) {
+      return;
+    }
+
+    void this.moggedThemeResources.music.play().catch(() => {
+      // Playback may be blocked until a user gesture.
     });
   }
 
@@ -740,6 +864,7 @@ class MinesweeperApp {
     if (action === "toggle-sound") {
       this.settings.soundEnabled = !this.settings.soundEnabled;
       this.persistSettings();
+      this.syncThemeMedia(true);
       this.renderMenuState();
       return;
     }
@@ -1202,6 +1327,7 @@ class MinesweeperApp {
     this.logAction(actionType, gesture, pointerType, index, changedIndices, now);
     this.refreshTrainerModel();
     this.playActionSound(actionType, index, undoSnapshot.game);
+    this.syncThemeMedia(true);
 
     if (this.game.status === "won" || this.game.status === "lost") {
       this.finalizeSession();
@@ -1335,6 +1461,7 @@ class MinesweeperApp {
     this.refreshTrainerModel();
     this.renderAll();
     this.playSound("reset");
+    this.syncThemeMedia(false);
   }
 
   private restartGame(): void {
@@ -1355,6 +1482,7 @@ class MinesweeperApp {
     this.refreshTrainerModel();
     this.renderAll();
     this.playSound("reset");
+    this.syncThemeMedia(false);
   }
 
   private refreshTrainerModel(): void {
@@ -1421,6 +1549,7 @@ class MinesweeperApp {
     this.trainerOverlayVisible = false;
     this.rebuildBoard();
     this.refreshTrainerModel();
+    this.syncThemeMedia(true);
     this.renderAll();
   }
 
@@ -1846,7 +1975,7 @@ class MinesweeperApp {
 
   private applyTheme(): void {
     applyTheme(this.settings.theme);
-    this.moggedBackground.setEnabled(this.settings.theme === "mogged");
+    this.syncThemeMedia(true);
   }
 
   private applyLanguage(): void {
