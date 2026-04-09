@@ -51,6 +51,7 @@ export const DEFAULT_CUSTOM_BOARD = {
 export const DEFAULT_SETTINGS: AppSettings = {
   language: DEFAULT_LANGUAGE,
   theme: DEFAULT_THEME,
+  soundEnabled: true,
   selectedDifficultyLevel: 2,
   customBoard: DEFAULT_CUSTOM_BOARD,
   interaction: DEFAULT_INTERACTION_SETTINGS,
@@ -58,7 +59,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
 };
 
 export const THEMES: ThemeName[] = ["xp-blue", "xp-olive", "xp-silver", "astronomer", "mogged"];
-export const LANGUAGES = ["en-US", "es-ES"] as const;
+export const LANGUAGES = ["en-US", "es-ES", "pt-BR"] as const;
 
 export const DIRECTION_VECTORS = [
   { dx: 0, dy: -1, key: "n" },

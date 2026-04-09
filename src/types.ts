@@ -1,9 +1,9 @@
 export type ThemeName = "xp-blue" | "xp-olive" | "xp-silver" | "astronomer" | "mogged";
-export type LanguageCode = "en-US" | "es-ES";
+export type LanguageCode = "en-US" | "es-ES" | "pt-BR";
 export type DifficultyLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 export type DifficultyKind = "preset" | "custom";
 export type GameStatus = "ready" | "playing" | "won" | "lost";
-export type OverlayMode = "color" | "percent" | "dots";
+export type OverlayMode = "color" | "percent" | "dots" | "best-move";
 export type TouchTapMode = "single-open" | "single-chord";
 export type PointerKind = "mouse" | "touch" | "pen" | "keyboard" | "system";
 export type GameActionType = "open" | "flag" | "chord" | "new-game" | "restart";
@@ -84,6 +84,7 @@ export interface CustomBoardSettings {
 export interface AppSettings {
   language: LanguageCode;
   theme: ThemeName;
+  soundEnabled: boolean;
   selectedDifficultyLevel: DifficultyLevel;
   customBoard: CustomBoardSettings;
   interaction: InteractionSettings;

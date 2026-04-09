@@ -5,18 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="description" content="Classic Windows XP themed Minesweeper with mobile controls, trainer overlays, and local stats." />
     <meta name="theme-color" content="#0a49e6" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Minesweeper Trainer" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta property="og:site_name" content="Minesweeper Trainer" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Minesweeper Trainer" />
+    <meta property="og:description" content="Classic Windows XP themed Minesweeper with mobile controls, trainer overlays, and local stats." />
+    <meta property="og:image" content="https://appmogged.com/minesweeper/og-wide.png" />
+    <meta property="og:url" content="https://appmogged.com/minesweeper/" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Minesweeper Trainer" />
+    <meta name="twitter:description" content="Classic Windows XP themed Minesweeper with mobile controls, trainer overlays, and local stats." />
+    <meta name="twitter:image" content="https://appmogged.com/minesweeper/og-wide.png" />
     <title>Minesweeper Trainer</title>
-    <link rel="icon" type="image/webp" href="./assets/icon.webp" />
+    <link rel="icon" type="image/webp" href="./assets/images/icon.webp" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
+    <canvas class="theme-background" id="theme-background" aria-hidden="true"></canvas>
     <main class="desktop-shell">
       <section class="xp-window app-window" id="app-window" aria-label="Minesweeper window">
         <header class="title-bar" id="title-bar">
           <div class="title-bar-left">
             <span class="title-icon-shell" aria-hidden="true">
-              <img class="title-icon" src="./assets/icon.webp" alt="" />
+              <img class="title-icon" src="./assets/images/icon.webp" alt="" />
             </span>
             <div class="title-copy">
               <span class="title-text" data-i18n="app.title">Minesweeper</span>
@@ -31,7 +46,7 @@
               aria-label="Minimize"
               data-i18n-aria-label="controls.titleBarMinimize"
             >
-              <img class="title-button-icon title-button-minimize-icon" src="./assets/minimize.svg" alt="" aria-hidden="true" />
+              <img class="title-button-icon title-button-minimize-icon" src="./assets/images/minimize.svg" alt="" aria-hidden="true" />
             </button>
             <button
               class="title-button title-button-maximize"
@@ -40,7 +55,7 @@
               aria-label="Maximize"
               data-i18n-aria-label="controls.titleBarMaximize"
             >
-              <img class="title-button-icon title-button-maximize-icon" src="./assets/maximize.svg" alt="" aria-hidden="true" />
+              <img class="title-button-icon title-button-maximize-icon" src="./assets/images/maximize.svg" alt="" aria-hidden="true" />
             </button>
             <button
               class="title-button title-button-close"
@@ -49,7 +64,7 @@
               aria-label="Close"
               data-i18n-aria-label="controls.titleBarClose"
             >
-              <img class="title-button-icon title-button-close-icon" src="./assets/close.svg" alt="" aria-hidden="true" />
+              <img class="title-button-icon title-button-close-icon" src="./assets/images/close.svg" alt="" aria-hidden="true" />
             </button>
           </div>
         </header>
@@ -84,6 +99,9 @@
                 <button class="menu-entry" data-menu-action="open-best-times-dialog" type="button" data-i18n="menu.bestTimes">Best Times</button>
                 <button class="menu-entry" data-menu-action="open-statistics-dialog" type="button" data-i18n="menu.statistics">Statistics</button>
                 <div class="menu-separator"></div>
+                <button class="menu-entry menu-entry-checkbox" data-menu-action="toggle-sound" type="button" data-i18n="menu.sound">
+                  Sound
+                </button>
                 <div class="menu-entry menu-entry-submenu" data-submenu-trigger="theme" tabindex="0">
                   <span data-i18n="menu.theme">Theme</span>
                   <span class="submenu-arrow" aria-hidden="true">▶</span>
@@ -95,6 +113,18 @@
                     <button class="menu-entry menu-entry-radio" data-theme-name="mogged" type="button">Mogged</button>
                   </div>
                 </div>
+                <div class="menu-entry menu-entry-submenu" data-submenu-trigger="language" tabindex="0">
+                  <span data-i18n="menu.language">Language</span>
+                  <span class="submenu-arrow" aria-hidden="true">▶</span>
+                  <div class="submenu-panel" data-submenu-panel="language">
+                    <button class="menu-entry menu-entry-radio" data-language-code="en-US" type="button">English</button>
+                    <button class="menu-entry menu-entry-radio" data-language-code="es-ES" type="button">Español</button>
+                    <button class="menu-entry menu-entry-radio" data-language-code="pt-BR" type="button">Português</button>
+                  </div>
+                </div>
+                <button class="menu-entry" data-menu-action="open-settings-dialog" type="button" data-i18n="menu.settings">
+                  Additional settings...
+                </button>
               </div>
             </div>
 
@@ -105,27 +135,16 @@
                   Enable Trainer
                 </button>
                 <div class="menu-separator"></div>
-                <button class="menu-entry menu-entry-radio" data-overlay-mode="color" type="button" data-i18n="overlay.color">Color Wash</button>
+                <button class="menu-entry menu-entry-radio" data-overlay-mode="color" type="button" data-i18n="overlay.color">Probability Map</button>
                 <button class="menu-entry menu-entry-radio" data-overlay-mode="percent" type="button" data-i18n="overlay.percent">Percent</button>
                 <button class="menu-entry menu-entry-radio" data-overlay-mode="dots" type="button" data-i18n="overlay.dots">Dots</button>
-                <div class="menu-separator"></div>
-                <button class="menu-entry" data-menu-action="open-settings-dialog" type="button" data-i18n="menu.settings">
-                  Settings...
-                </button>
+                <button class="menu-entry menu-entry-radio" data-overlay-mode="best-move" type="button" data-i18n="overlay.bestMove">Best Move</button>
               </div>
             </div>
 
             <div class="menu-shell" data-menu-shell="help">
               <button class="menu-button" data-menu-trigger="help" type="button" data-i18n="menu.help">Help</button>
               <div class="menu-panel" data-menu-panel="help">
-                <div class="menu-entry menu-entry-submenu" data-submenu-trigger="language" tabindex="0">
-                  <span data-i18n="menu.language">Language</span>
-                  <span class="submenu-arrow" aria-hidden="true">▶</span>
-                  <div class="submenu-panel" data-submenu-panel="language">
-                    <button class="menu-entry menu-entry-radio" data-language-code="en-US" type="button">English</button>
-                    <button class="menu-entry menu-entry-radio" data-language-code="es-ES" type="button">Español</button>
-                  </div>
-                </div>
                 <button class="menu-entry" data-menu-action="open-controls-dialog" type="button" data-i18n="menu.controls">Controls</button>
                 <button class="menu-entry" data-menu-action="open-about-dialog" type="button" data-i18n="menu.about">About Minesweeper</button>
               </div>
@@ -211,7 +230,7 @@
     <dialog class="xp-dialog" id="settings-dialog">
       <form class="dialog-card" id="settings-form" method="dialog">
         <header class="dialog-header">
-          <h2 class="dialog-title" data-i18n="dialogs.settingsTitle">Interaction Settings</h2>
+          <h2 class="dialog-title" data-i18n="dialogs.settingsTitle">Additional Settings</h2>
         </header>
         <div class="dialog-body">
           <label class="field-row field-row-stack" for="double-tap-range">
@@ -316,6 +335,7 @@
           <p class="dialog-copy" data-i18n="about.credits">
             Hosted at appmogged.com/minesweeper. Built with TypeScript and Vite for local development and static deployment.
           </p>
+          <p class="dialog-copy" id="about-version">Build version: dev</p>
         </div>
         <footer class="dialog-footer">
           <button class="dialog-button dialog-button-primary" type="button" data-dialog-close="about-dialog" data-i18n="controls.close">Close</button>

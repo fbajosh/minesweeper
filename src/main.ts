@@ -1,26 +1,42 @@
 import {
+  DEFAULT_THEME,
   DEFAULT_SETTINGS,
   DIRECTION_VECTORS,
-  LANGUAGES,
   MAX_AUTO_FIT_COLUMNS,
   MAX_AUTO_FIT_ROWS,
-  MAX_COUNTER_VALUE,
   PRESET_DIFFICULTIES,
-  THEMES,
   TIMER_TICK_MS,
   clampCustomBoard,
   configForCustom,
   configForPreset,
 } from "./constants";
 import {
+  asPointerKind,
+  clampValue,
+  cloneGameState,
+  dotBucket,
+  formatCounter,
+  formatDuration,
+  requireElement,
+  trainerMix,
+} from "./app-helpers";
+import type {
+  ActiveSession,
+  CellElements,
+  CounterMarquee,
+  PendingTap,
+  PointerSession,
+  UndoSnapshot,
+  WindowDragSession,
+  WindowResizeSession,
+} from "./app-internal-types";
+import {
   createRestartGame,
   chordCell,
-  coordinatesFor,
   countRemainingMinesEstimate,
   createGame,
   getCell,
   getElapsedMs,
-  getNeighborIndices,
   isOversizedBoard,
   revealCell,
   toggleFlag,
@@ -37,13 +53,13 @@ import {
 import { saveGameRecord } from "./storage";
 import { readStoredSettings, readStoredStats, recordFinishedGame, statsBucketForConfig, writeStoredSettings, writeStoredStats } from "./stats";
 import { applyTheme } from "./theme";
+import { createThemeMediaController } from "./theme-media-controller";
 import { computeTrainerModel } from "./trainer";
 import type {
   AppSettings,
   BoardConfig,
   CellState,
   DifficultyLevel,
-  GameActionRecord,
   GameActionType,
   GameOutcome,
   GameState,
@@ -55,136 +71,10 @@ import type {
   TrainerModel,
 } from "./types";
 
-interface CellElements {
-  button: HTMLButtonElement;
-  value: HTMLSpanElement;
-  trainer: HTMLSpanElement;
-}
-
-interface ActiveSession {
-  createdAtIso: string;
-  actions: GameActionRecord[];
-  persisted: boolean;
-  statsLocked: boolean;
-}
-
-interface UndoSnapshot {
-  game: GameState;
-  actionCount: number;
-}
-
-interface PendingTap {
-  index: number;
-  action: "open" | "chord";
-  expiresAt: number;
-  timerId: number;
-}
-
-interface PointerSession {
-  pointerId: number;
-  pointerType: PointerKind;
-  cellIndex: number;
-  startX: number;
-  startY: number;
-  startScrollLeft: number;
-  startScrollTop: number;
-  dragging: boolean;
-  longPressTriggered: boolean;
-  holdTimerId: number | null;
-  hoveringOrigin: boolean;
-}
-
-interface CounterMarquee {
-  message: string;
-  startedAtMs: number;
-}
-
-interface WindowDragSession {
-  pointerId: number;
-  startX: number;
-  startY: number;
-  startLeft: number;
-  startTop: number;
-}
-
-interface WindowResizeSession {
-  pointerId: number;
-  startX: number;
-  startY: number;
-  startWidth: number;
-}
-
 const COUNTER_MARQUEE_STEP_MS = 180;
 const MIN_DESKTOP_BOARD_WIDTH = 400;
-
-function requireElement<T extends Element>(selector: string): T {
-  const element = document.querySelector<T>(selector);
-  if (!element) {
-    throw new Error(`Missing element: ${selector}`);
-  }
-  return element;
-}
-
-function asPointerKind(value: string): PointerKind {
-  if (value === "mouse" || value === "touch" || value === "pen") {
-    return value;
-  }
-  return "system";
-}
-
-function formatCounter(value: number): string {
-  const clamped = Math.max(-99, Math.min(MAX_COUNTER_VALUE, Math.trunc(value)));
-  if (clamped < 0) {
-    return `-${String(Math.abs(clamped)).padStart(2, "0")}`;
-  }
-  return String(clamped).padStart(3, "0");
-}
-
-function formatDuration(ms: number | null): string {
-  if (ms === null) {
-    return "—";
-  }
-
-  if (ms < 1000) {
-    return "0.0s";
-  }
-
-  return `${(ms / 1000).toFixed(ms < 10000 ? 1 : 0)}s`;
-}
-
-function clampValue(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
-
-function cloneGameState(state: GameState): GameState {
-  return {
-    ...state,
-    config: { ...state.config },
-    cells: state.cells.map((cell) => ({ ...cell })),
-  };
-}
-
-function trainerMix(probability: number): string {
-  const safeWeight = Math.round((1 - probability) * 100);
-  const riskWeight = Math.round(probability * 100);
-  return `color-mix(in srgb, var(--trainer-safe) ${safeWeight}%, var(--trainer-risk) ${riskWeight}%)`;
-}
-
-function dotBucket(probability: number): 0 | 1 | 2 | 3 | 4 {
-  if (probability <= 0) {
-    return 0;
-  }
-  if (probability >= 1) {
-    return 4;
-  }
-  if (probability < 1 / 3) {
-    return 1;
-  }
-  if (probability < 2 / 3) {
-    return 2;
-  }
-  return 3;
-}
+const BUILD_VERSION = import.meta.env.VITE_BUILD_VERSION?.trim() || "dev";
+const BEST_MOVE_EPSILON = 1e-9;
 
 class MinesweeperApp {
   private settings: AppSettings = readStoredSettings();
@@ -339,6 +229,12 @@ class MinesweeperApp {
 
   private readonly aboutDialog = requireElement<HTMLDialogElement>("#about-dialog");
 
+  private readonly aboutVersion = requireElement<HTMLElement>("#about-version");
+
+  private readonly themeBackground = requireElement<HTMLCanvasElement>("#theme-background");
+
+  private readonly themeMedia = createThemeMediaController(this.themeBackground);
+
   init(): void {
     this.settings = {
       ...DEFAULT_SETTINGS,
@@ -361,6 +257,18 @@ class MinesweeperApp {
   }
 
   private bindEvents(): void {
+    this.bindFaceControls();
+    this.bindWindowControls();
+    this.bindGlobalControls();
+    this.bindMenuControls();
+    this.bindDialogControls();
+    this.bindCustomDialogControls();
+    this.bindSettingsControls();
+    this.bindMenuSelectionControls();
+    this.bindBoardControls();
+  }
+
+  private bindFaceControls(): void {
     this.faceButton.addEventListener("click", () => {
       if (this.settings.trainer.enabled && this.game.status !== "won" && this.game.status !== "lost") {
         return;
@@ -389,7 +297,9 @@ class MinesweeperApp {
       this.faceButton.classList.remove("is-pressed");
       this.setTrainerOverlayVisible(false);
     });
+  }
 
+  private bindWindowControls(): void {
     this.titleMinimizeButton.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -404,6 +314,11 @@ class MinesweeperApp {
     this.titleCloseButton.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
+      if (this.settings.theme === "mogged") {
+        this.settings.theme = DEFAULT_THEME;
+        this.persistSettings();
+        this.applyTheme();
+      }
       this.newGame(this.config);
     });
 
@@ -427,7 +342,9 @@ class MinesweeperApp {
       this.handleWindowDragEnd(event);
       this.handleWindowResizeEnd(event);
     });
+  }
 
+  private bindGlobalControls(): void {
     document.addEventListener("click", (event) => {
       if (this.windowMinimized) {
         this.restoreWindow();
@@ -445,7 +362,9 @@ class MinesweeperApp {
         this.closeMenus();
       }
     });
+  }
 
+  private bindMenuControls(): void {
     for (const menuShell of document.querySelectorAll<HTMLElement>(".menu-shell")) {
       const menuName = menuShell.dataset.menuShell;
       const trigger = menuShell.querySelector<HTMLButtonElement>("[data-menu-trigger]");
@@ -476,7 +395,9 @@ class MinesweeperApp {
         submenuTrigger.classList.toggle("is-open");
       });
     }
+  }
 
+  private bindDialogControls(): void {
     document.querySelectorAll<HTMLElement>("[data-dialog-close]").forEach((button) => {
       button.addEventListener("click", () => {
         const targetId = button.dataset.dialogClose;
@@ -486,7 +407,9 @@ class MinesweeperApp {
         requireElement<HTMLDialogElement>(`#${targetId}`).close();
       });
     });
+  }
 
+  private bindCustomDialogControls(): void {
     this.customForm.addEventListener("submit", (event) => {
       event.preventDefault();
       const values = clampCustomBoard(
@@ -512,7 +435,9 @@ class MinesweeperApp {
 
     this.customColumns.addEventListener("input", syncCustomMineLimit);
     this.customRows.addEventListener("input", syncCustomMineLimit);
+  }
 
+  private bindSettingsControls(): void {
     const syncSettingsFromRanges = () => {
       this.settings.interaction.doubleTapMs = Number(this.doubleTapRange.value);
       this.settings.interaction.longPressMs = Number(this.longPressRange.value);
@@ -526,7 +451,9 @@ class MinesweeperApp {
     this.longPressRange.addEventListener("input", syncSettingsFromRanges);
     this.dragThresholdRange.addEventListener("input", syncSettingsFromRanges);
     this.touchTapModeSelect.addEventListener("change", syncSettingsFromRanges);
+  }
 
+  private bindMenuSelectionControls(): void {
     document.querySelectorAll<HTMLButtonElement>("[data-menu-action]").forEach((button) => {
       button.addEventListener("click", (event) => {
         event.stopPropagation();
@@ -577,7 +504,9 @@ class MinesweeperApp {
         this.closeMenus();
       });
     });
+  }
 
+  private bindBoardControls(): void {
     this.boardGrid.addEventListener("contextmenu", (event) => {
       event.preventDefault();
       if (event.button !== 2) {
@@ -645,6 +574,21 @@ class MinesweeperApp {
     };
   }
 
+  private playSound(sound: "flagged" | "lose" | "open" | "reset" | "win"): void {
+    this.themeMedia.playSoundEffect(sound, {
+      soundEnabled: this.settings.soundEnabled,
+      theme: this.settings.theme,
+    });
+  }
+
+  private syncThemeMedia(allowPlayback: boolean): void {
+    this.themeMedia.syncTheme(this.settings.theme, {
+      allowPlayback,
+      boardHasStarted: this.game.startedAtMs !== null,
+      soundEnabled: this.settings.soundEnabled,
+    });
+  }
+
   private handleMenuAction(action: string | undefined): void {
     if (!action) {
       return;
@@ -698,6 +642,14 @@ class MinesweeperApp {
       return;
     }
 
+    if (action === "toggle-sound") {
+      this.settings.soundEnabled = !this.settings.soundEnabled;
+      this.persistSettings();
+      this.syncThemeMedia(true);
+      this.renderMenuState();
+      return;
+    }
+
     if (action === "open-settings-dialog") {
       this.renderSettingsDialog();
       this.closeMenus();
@@ -713,6 +665,7 @@ class MinesweeperApp {
 
     if (action === "open-about-dialog") {
       this.closeMenus();
+      this.renderAboutDialog();
       this.aboutDialog.showModal();
     }
   }
@@ -1154,6 +1107,8 @@ class MinesweeperApp {
     this.trainerOverlayVisible = false;
     this.logAction(actionType, gesture, pointerType, index, changedIndices, now);
     this.refreshTrainerModel();
+    this.playActionSound(actionType, index, undoSnapshot.game);
+    this.syncThemeMedia(true);
 
     if (this.game.status === "won" || this.game.status === "lost") {
       this.finalizeSession();
@@ -1274,18 +1229,7 @@ class MinesweeperApp {
     this.clearPendingTap();
     this.closeMenus();
     this.finalizeSession();
-    this.config = config;
-    this.game = createGame(config);
-    this.activeSession = this.createActiveSession();
-    this.undoStack = [];
-    this.statusOverrideKey = null;
-    this.hoveredIndex = null;
-    this.trainerOverlayVisible = false;
-    this.startCounterMarquee("SEE!YA");
-    this.boardViewport.scrollTo({ left: 0, top: 0 });
-    this.rebuildBoard();
-    this.refreshTrainerModel();
-    this.renderAll();
+    this.startFreshGame(createGame(config));
   }
 
   private restartGame(): void {
@@ -1293,8 +1237,12 @@ class MinesweeperApp {
     this.clearPendingTap();
     this.closeMenus();
     this.finalizeSession();
-    this.config = sourceGame.config;
-    this.game = createRestartGame(sourceGame);
+    this.startFreshGame(createRestartGame(sourceGame));
+  }
+
+  private startFreshGame(nextGame: GameState): void {
+    this.config = nextGame.config;
+    this.game = nextGame;
     this.activeSession = this.createActiveSession();
     this.undoStack = [];
     this.statusOverrideKey = null;
@@ -1305,6 +1253,8 @@ class MinesweeperApp {
     this.rebuildBoard();
     this.refreshTrainerModel();
     this.renderAll();
+    this.playSound("reset");
+    this.syncThemeMedia(false);
   }
 
   private refreshTrainerModel(): void {
@@ -1321,6 +1271,29 @@ class MinesweeperApp {
       maxComponentSize: 32,
       maxSearchNodes: 2000000,
     });
+  }
+
+  private playActionSound(actionType: GameActionType, index: number, previousGame: GameState): void {
+    if (this.game.status === "lost") {
+      this.playSound("lose");
+      return;
+    }
+
+    if (this.game.status === "won") {
+      this.playSound("win");
+      return;
+    }
+
+    if (actionType === "flag") {
+      if (!previousGame.cells[index]?.flagged && this.game.cells[index]?.flagged) {
+        this.playSound("flagged");
+      }
+      return;
+    }
+
+    if (actionType === "open" || actionType === "chord") {
+      this.playSound("open");
+    }
   }
 
   private undoLastMove(): void {
@@ -1348,6 +1321,7 @@ class MinesweeperApp {
     this.trainerOverlayVisible = false;
     this.rebuildBoard();
     this.refreshTrainerModel();
+    this.syncThemeMedia(true);
     this.renderAll();
   }
 
@@ -1559,74 +1533,127 @@ class MinesweeperApp {
 
   private renderBoard(): void {
     const overlayMode = this.settings.trainer.overlayMode;
+    const bestMoveProbability = this.findBestMoveProbability(overlayMode);
 
-    this.cellElements.forEach(({ button, value, trainer }, index) => {
-      const cell = this.game.cells[index];
-      const probability = this.trainerModel.probabilities.get(index)?.probability;
-      const hidden = !cell.revealed;
-
-      button.className = "cell";
-      value.textContent = "";
-      trainer.textContent = "";
-      trainer.className = "cell-trainer";
-      button.removeAttribute("data-overlay-mode");
-      button.style.removeProperty("--trainer-overlay");
-      button.style.removeProperty("--trainer-dot-color");
-      button.classList.toggle("is-hovered", this.hoveredIndex === index);
-
-      if (hidden) {
-        button.classList.add("is-hidden");
-      } else {
-        button.classList.add("is-revealed");
-      }
-
-      if (
-        index === this.pointerSession?.cellIndex &&
-        !this.pointerSession.dragging &&
-        !this.pointerSession.longPressTriggered &&
-        (this.pointerSession.pointerType !== "mouse" || this.pointerSession.hoveringOrigin)
-      ) {
-        button.classList.add("is-pressing");
-      }
-
-      if (cell.revealed && cell.adjacentMines > 0 && !cell.mine) {
-        button.classList.add(`cell-number-${cell.adjacentMines}`);
-        value.textContent = String(cell.adjacentMines);
-      }
-
-      if (cell.flagged) {
-        button.classList.add("is-flagged");
-      }
-
-      if (cell.mine) {
-        button.classList.add("is-mine");
-      }
-
-      if (cell.exploded) {
-        button.classList.add("is-exploded");
-      }
-
-      if (this.game.status === "lost" && cell.flagged && !cell.mine) {
-        button.classList.add("is-wrong-flag");
-      }
-
-      if (probability !== undefined && hidden && !cell.flagged && this.settings.trainer.enabled) {
-        button.classList.add("has-trainer");
-        button.dataset.overlayMode = overlayMode;
-        const mixedColor = trainerMix(probability);
-        button.style.setProperty("--trainer-overlay", mixedColor);
-        button.style.setProperty("--trainer-dot-color", mixedColor);
-
-        if (overlayMode === "percent") {
-          trainer.textContent = `${Math.round(probability * 100)}`;
-        } else if (overlayMode === "dots") {
-          const bucket = dotBucket(probability);
-          if (bucket > 0) {
-            trainer.classList.add(`dots-${bucket}`);
-          }
-        }
-      }
+    this.cellElements.forEach((elements, index) => {
+      this.renderCell(index, elements, overlayMode, bestMoveProbability);
     });
+  }
+
+  private findBestMoveProbability(overlayMode: OverlayMode): number | null {
+    if (overlayMode !== "best-move" || !this.settings.trainer.enabled) {
+      return null;
+    }
+
+    let bestMoveProbability: number | null = null;
+    for (const [index, entry] of this.trainerModel.probabilities.entries()) {
+      const cell = this.game.cells[index];
+      if (!cell || cell.revealed || cell.flagged) {
+        continue;
+      }
+
+      if (bestMoveProbability === null || entry.probability < bestMoveProbability) {
+        bestMoveProbability = entry.probability;
+      }
+    }
+
+    return bestMoveProbability;
+  }
+
+  private renderCell(
+    index: number,
+    { button, value, trainer }: CellElements,
+    overlayMode: OverlayMode,
+    bestMoveProbability: number | null,
+  ): void {
+    const cell = this.game.cells[index];
+    const probability = this.trainerModel.probabilities.get(index)?.probability;
+    const hidden = !cell.revealed;
+
+    button.className = "cell";
+    value.textContent = "";
+    trainer.textContent = "";
+    trainer.className = "cell-trainer";
+    button.removeAttribute("data-overlay-mode");
+    button.style.removeProperty("--trainer-overlay");
+    button.style.removeProperty("--trainer-dot-color");
+    button.classList.toggle("is-hovered", this.hoveredIndex === index);
+
+    button.classList.toggle("is-hidden", hidden);
+    button.classList.toggle("is-revealed", !hidden);
+
+    if (this.isCellPressing(index)) {
+      button.classList.add("is-pressing");
+    }
+
+    if (cell.revealed && cell.adjacentMines > 0 && !cell.mine) {
+      button.classList.add(`cell-number-${cell.adjacentMines}`);
+      value.textContent = String(cell.adjacentMines);
+    }
+
+    if (cell.flagged) {
+      button.classList.add("is-flagged");
+    }
+
+    if (cell.mine) {
+      button.classList.add("is-mine");
+    }
+
+    if (cell.exploded) {
+      button.classList.add("is-exploded");
+    }
+
+    if (this.game.status === "lost" && cell.flagged && !cell.mine) {
+      button.classList.add("is-wrong-flag");
+    }
+
+    if (!this.shouldShowTrainerForCell(cell, probability, overlayMode, bestMoveProbability)) {
+      return;
+    }
+
+    button.classList.add("has-trainer");
+    button.dataset.overlayMode = overlayMode;
+    const mixedColor = trainerMix(probability);
+    button.style.setProperty("--trainer-overlay", mixedColor);
+    button.style.setProperty("--trainer-dot-color", mixedColor);
+
+    if (overlayMode === "percent") {
+      trainer.textContent = `${Math.round(probability * 100)}`;
+      return;
+    }
+
+    if (overlayMode === "dots") {
+      const bucket = dotBucket(probability);
+      if (bucket > 0) {
+        trainer.classList.add(`dots-${bucket}`);
+      }
+    }
+  }
+
+  private isCellPressing(index: number): boolean {
+    return Boolean(
+      index === this.pointerSession?.cellIndex &&
+      !this.pointerSession.dragging &&
+      !this.pointerSession.longPressTriggered &&
+      (this.pointerSession.pointerType !== "mouse" || this.pointerSession.hoveringOrigin),
+    );
+  }
+
+  private shouldShowTrainerForCell(
+    cell: GameState["cells"][number],
+    probability: number | undefined,
+    overlayMode: OverlayMode,
+    bestMoveProbability: number | null,
+  ): probability is number {
+    if (probability === undefined || cell.revealed || cell.flagged || !this.settings.trainer.enabled) {
+      return false;
+    }
+
+    if (overlayMode !== "best-move") {
+      return true;
+    }
+
+    return bestMoveProbability !== null && Math.abs(probability - bestMoveProbability) <= BEST_MOVE_EPSILON;
   }
 
   private renderCustomDialog(): void {
@@ -1657,6 +1684,10 @@ class MinesweeperApp {
       const value = option.value as TouchTapMode;
       option.textContent = touchTapModeLabel(language, value);
     }
+  }
+
+  private renderAboutDialog(): void {
+    this.aboutVersion.textContent = translate(this.settings.language, "about.version", { version: BUILD_VERSION });
   }
 
   private renderBestTimesDialog(): void {
@@ -1732,6 +1763,10 @@ class MinesweeperApp {
       entry.dataset.checked = String(this.settings.trainer.enabled);
     });
 
+    document.querySelectorAll<HTMLElement>(".menu-entry-checkbox[data-menu-action='toggle-sound']").forEach((entry) => {
+      entry.dataset.checked = String(this.settings.soundEnabled);
+    });
+
     document.querySelectorAll<HTMLButtonElement>(".menu-entry[data-menu-action='undo-move']").forEach((entry) => {
       entry.disabled = this.game.status === "won";
     });
@@ -1765,6 +1800,7 @@ class MinesweeperApp {
 
   private applyTheme(): void {
     applyTheme(this.settings.theme);
+    this.syncThemeMedia(true);
   }
 
   private applyLanguage(): void {
@@ -1772,6 +1808,7 @@ class MinesweeperApp {
     applyTranslations(this.settings.language);
     document.title = `${translate(this.settings.language, "app.title")} ${translate(this.settings.language, "app.subtitle")}`;
     this.hoverHint.textContent = translate(this.settings.language, "controls.hoverHint");
+    this.renderAboutDialog();
   }
 
   private persistSettings(): void {

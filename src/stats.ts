@@ -1,4 +1,4 @@
-import { DEFAULT_SETTINGS, THEMES } from "./constants";
+import { DEFAULT_SETTINGS, LANGUAGES, THEMES } from "./constants";
 import type { BoardConfig, GameRecord, PersistedStats, StatsBucket } from "./types";
 
 const SETTINGS_STORAGE_KEY = "minesweeper-trainer-settings";
@@ -49,6 +49,10 @@ export function readStoredSettings() {
 
     if (!THEMES.includes(nextSettings.theme)) {
       nextSettings.theme = DEFAULT_SETTINGS.theme;
+    }
+
+    if (!LANGUAGES.includes(nextSettings.language)) {
+      nextSettings.language = DEFAULT_SETTINGS.language;
     }
 
     return nextSettings;
