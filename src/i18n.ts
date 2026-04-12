@@ -1,4 +1,4 @@
-import type { DifficultyLevel, LanguageCode, OverlayMode, ThemeName, TouchTapMode } from "./types";
+import type { DifficultyLevel, LanguageCode, OverlayMode, ThemeName } from "./types";
 
 type TranslationLeaf = string;
 type TranslationNode = {
@@ -23,6 +23,8 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       custom: "Custom...",
       bestTimes: "Best Times",
       statistics: "Statistics",
+      basicStatistics: "Basic statistics",
+      advancedStatistics: "Advanced statistics",
       enableTrainer: "Enable Trainer",
       overlayMode: "Overlay",
       settings: "Additional settings...",
@@ -30,6 +32,9 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       language: "Language",
       controls: "Controls",
       about: "About Minesweeper",
+      credits: "Credits",
+      appmogged: "Appmogged",
+      exit: "Exit",
     },
     difficulty: {
       custom: "Custom",
@@ -45,10 +50,6 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       percent: "Percent",
       dots: "Dots",
       bestMove: "Best Move",
-    },
-    touchTapMode: {
-      "single-open": "Single tap opens, double tap chords",
-      "single-chord": "Single tap chords, double tap opens",
     },
     theme: {
       "xp-blue": "Blue",
@@ -86,6 +87,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       cancel: "Cancel",
       start: "Start",
       close: "Close",
+      advanced: "Advanced",
       averageTime: "Average Time",
       totalGames: "Games",
       wins: "Wins",
@@ -98,7 +100,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       doubleTapWindow: "Double-tap window",
       longPressWindow: "Long-hold time",
       dragThreshold: "Drag sensitivity",
-      tapMode: "Touch tap behavior",
+      singleClickChord: "Single-click opened numbers",
       milliseconds: "{value} ms",
       pixels: "{value} px",
       restart: "Restart",
@@ -106,6 +108,8 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       titleBarMinimize: "Minimize",
       titleBarMaximize: "Maximize",
       titleBarClose: "Close",
+      zoomIn: "Zoom in",
+      zoomOut: "Zoom out",
       hoverHint: "Hover to inspect. Shift+click chords.",
       trainerMode: "Overlay: {mode}",
       languageLabel: "Language: {language}",
@@ -119,8 +123,10 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       settingsTitle: "Additional Settings",
       bestTimesTitle: "Best Times",
       statisticsTitle: "Statistics",
+      advancedStatisticsTitle: "Advanced Statistics",
       controlsTitle: "Controls",
       aboutTitle: "About Minesweeper Trainer",
+      creditsTitle: "Credits",
     },
     about: {
       body:
@@ -134,6 +140,35 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
         "Desktop: left-click opens, right-click flags, double-click or Shift+click chords. Touch: tap and hold to flag. Gesture timing is configurable in Game > Additional settings.",
       trainer:
         "Trainer mode shades hidden cells by mine probability. Probability Map is the default overlay, with percent, dot, and Best Move modes available from the Training menu.",
+    },
+    advancedStats: {
+      noteReady: "Current game/session metrics. Board difficulty is available after the minefield is generated.",
+      noteWaiting: "Open a cell to generate the minefield and board difficulty metrics.",
+      cps: "CPS",
+      cpsTip: "Clicks per second: total completed click attempts divided by elapsed time.",
+      threeBv: "3BV",
+      threeBvTip: "Bechtel's Board Benchmark Value: minimum left clicks required to clear the board without flags.",
+      threeBvPerSecond: "3BV/s",
+      threeBvPerSecondTip: "Solving rate: 3BV divided by elapsed time.",
+      ios: "IOS",
+      iosTip: "Index of Speed: log(3BV) divided by log(time).",
+      rqp: "RQP",
+      rqpTip: "Rapport Qualite Prix using the configured formula: time divided by 3BV/s.",
+      ioe: "IOE",
+      ioeTip: "Index of Efficiency: 3BV divided by total clicks.",
+      correctness: "Correctness",
+      correctnessTip: "Effective clicks divided by total clicks. Effective clicks changed the board.",
+      throughput: "Throughput",
+      throughputTip: "3BV divided by effective clicks.",
+      zini: "ZiNi",
+      ziniTip: "Flag-assisted board difficulty. Greedy, random, and human ZiNi solvers are planned.",
+    },
+    credits: {
+      app:
+        "Minesweeper Trainer is an AppMogged game built for classic Minesweeper play, mobile controls, local stats, and trainer overlays.",
+      inspiration: "Visual direction is inspired by classic Microsoft Minesweeper and the Windows XP Luna interface.",
+      fonts: "Counter digits use DSEG by keshikan. Board numbers use the Mine Sweeper font from FontStruct.",
+      tools: "Built with TypeScript and Vite, with static deployment to appmogged.com/minesweeper.",
     },
   },
   "es-ES": {
@@ -153,6 +188,8 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       custom: "Personalizado...",
       bestTimes: "Mejores tiempos",
       statistics: "Estadisticas",
+      basicStatistics: "Estadisticas basicas",
+      advancedStatistics: "Estadisticas avanzadas",
       enableTrainer: "Activar entrenador",
       overlayMode: "Superposicion",
       settings: "Ajustes adicionales...",
@@ -160,6 +197,9 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       language: "Idioma",
       controls: "Controles",
       about: "Acerca de Buscaminas",
+      credits: "Creditos",
+      appmogged: "Appmogged",
+      exit: "Salir",
     },
     difficulty: {
       custom: "Personalizado",
@@ -175,10 +215,6 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       percent: "Porcentaje",
       dots: "Puntos",
       bestMove: "Mejor jugada",
-    },
-    touchTapMode: {
-      "single-open": "Un toque abre, doble toque acorde",
-      "single-chord": "Un toque acorde, doble toque abre",
     },
     theme: {
       "xp-blue": "Azul",
@@ -216,6 +252,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       cancel: "Cancelar",
       start: "Empezar",
       close: "Cerrar",
+      advanced: "Avanzado",
       averageTime: "Tiempo medio",
       totalGames: "Partidas",
       wins: "Victorias",
@@ -228,7 +265,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       doubleTapWindow: "Ventana de doble toque",
       longPressWindow: "Tiempo de pulsacion larga",
       dragThreshold: "Sensibilidad de arrastre",
-      tapMode: "Comportamiento tactil",
+      singleClickChord: "Un clic en numeros abiertos",
       milliseconds: "{value} ms",
       pixels: "{value} px",
       restart: "Reiniciar",
@@ -236,6 +273,8 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       titleBarMinimize: "Minimizar",
       titleBarMaximize: "Maximizar",
       titleBarClose: "Cerrar",
+      zoomIn: "Acercar",
+      zoomOut: "Alejar",
       hoverHint: "Pasa el cursor para inspeccionar. Mayus+clic hace acorde.",
       trainerMode: "Superposicion: {mode}",
       languageLabel: "Idioma: {language}",
@@ -249,8 +288,10 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       settingsTitle: "Ajustes adicionales",
       bestTimesTitle: "Mejores tiempos",
       statisticsTitle: "Estadisticas",
+      advancedStatisticsTitle: "Estadisticas avanzadas",
       controlsTitle: "Controles",
       aboutTitle: "Acerca de Buscaminas Entrenador",
+      creditsTitle: "Creditos",
     },
     about: {
       body:
@@ -264,6 +305,35 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
         "Escritorio: clic izquierdo abre, clic derecho marca, doble clic o Mayus+clic hace acorde. Tactil: manten pulsado para marcar. El tiempo de gestos se configura en Juego > Ajustes adicionales.",
       trainer:
         "El modo entrenador colorea las celdas ocultas segun la probabilidad de mina. Desde el menu de Entrenamiento puedes cambiar entre mapa de probabilidad, porcentaje, puntos y mejor jugada.",
+    },
+    advancedStats: {
+      noteReady: "Metricas de la partida/sesion actual. La dificultad del tablero esta disponible despues de generar las minas.",
+      noteWaiting: "Abre una celda para generar las minas y las metricas de dificultad del tablero.",
+      cps: "CPS",
+      cpsTip: "Clics por segundo: intentos de clic completados divididos por el tiempo.",
+      threeBv: "3BV",
+      threeBvTip: "Bechtel's Board Benchmark Value: clics izquierdos minimos para despejar el tablero sin banderas.",
+      threeBvPerSecond: "3BV/s",
+      threeBvPerSecondTip: "Ritmo de resolucion: 3BV dividido por el tiempo.",
+      ios: "IOS",
+      iosTip: "Index of Speed: log(3BV) dividido por log(tiempo).",
+      rqp: "RQP",
+      rqpTip: "Rapport Qualite Prix con la formula configurada: tiempo dividido por 3BV/s.",
+      ioe: "IOE",
+      ioeTip: "Index of Efficiency: 3BV dividido por clics totales.",
+      correctness: "Correctness",
+      correctnessTip: "Clics efectivos divididos por clics totales. Un clic efectivo cambia el tablero.",
+      throughput: "Throughput",
+      throughputTip: "3BV dividido por clics efectivos.",
+      zini: "ZiNi",
+      ziniTip: "Dificultad con banderas. Los solvers ZiNi greedy, aleatorio y humano estan planificados.",
+    },
+    credits: {
+      app:
+        "Buscaminas Entrenador es un juego de AppMogged creado para el Buscaminas clasico, controles moviles, estadisticas locales y capas de entrenador.",
+      inspiration: "La direccion visual esta inspirada en el Buscaminas clasico de Microsoft y la interfaz Windows XP Luna.",
+      fonts: "Los digitos de los contadores usan DSEG de keshikan. Los numeros del tablero usan la fuente Mine Sweeper de FontStruct.",
+      tools: "Creado con TypeScript y Vite, con despliegue estatico en appmogged.com/minesweeper.",
     },
   },
   "pt-BR": {
@@ -283,6 +353,8 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       custom: "Personalizado...",
       bestTimes: "Melhores tempos",
       statistics: "Estatisticas",
+      basicStatistics: "Estatisticas basicas",
+      advancedStatistics: "Estatisticas avancadas",
       enableTrainer: "Ativar trainer",
       overlayMode: "Overlay",
       settings: "Ajustes adicionais...",
@@ -290,6 +362,9 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       language: "Idioma",
       controls: "Controles",
       about: "Sobre o Campo Minado",
+      credits: "Creditos",
+      appmogged: "Appmogged",
+      exit: "Sair",
     },
     difficulty: {
       custom: "Personalizado",
@@ -305,10 +380,6 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       percent: "Porcentagem",
       dots: "Pontos",
       bestMove: "Melhor jogada",
-    },
-    touchTapMode: {
-      "single-open": "Um toque abre, toque duplo faz acorde",
-      "single-chord": "Um toque faz acorde, toque duplo abre",
     },
     theme: {
       "xp-blue": "Blue",
@@ -346,6 +417,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       cancel: "Cancelar",
       start: "Iniciar",
       close: "Fechar",
+      advanced: "Avancado",
       averageTime: "Tempo medio",
       totalGames: "Jogos",
       wins: "Vitorias",
@@ -358,7 +430,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       doubleTapWindow: "Janela de toque duplo",
       longPressWindow: "Tempo de pressao longa",
       dragThreshold: "Sensibilidade de arraste",
-      tapMode: "Comportamento de toque",
+      singleClickChord: "Clique unico em numeros abertos",
       milliseconds: "{value} ms",
       pixels: "{value} px",
       restart: "Reiniciar",
@@ -366,6 +438,8 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       titleBarMinimize: "Minimizar",
       titleBarMaximize: "Maximizar",
       titleBarClose: "Fechar",
+      zoomIn: "Aumentar zoom",
+      zoomOut: "Diminuir zoom",
       hoverHint: "Passe o mouse para inspecionar. Shift+clique faz acorde.",
       trainerMode: "Overlay: {mode}",
       languageLabel: "Idioma: {language}",
@@ -379,8 +453,10 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       settingsTitle: "Ajustes adicionais",
       bestTimesTitle: "Melhores tempos",
       statisticsTitle: "Estatisticas",
+      advancedStatisticsTitle: "Estatisticas avancadas",
       controlsTitle: "Controles",
       aboutTitle: "Sobre o Campo Minado Trainer",
+      creditsTitle: "Creditos",
     },
     about: {
       body:
@@ -394,6 +470,35 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
         "Desktop: clique esquerdo abre, clique direito marca, clique duplo ou Shift+clique faz acorde. No toque: segure para marcar. O tempo dos gestos pode ser ajustado em Jogo > Ajustes adicionais.",
       trainer:
         "O modo trainer colore as celulas ocultas pela probabilidade de mina. No menu Treino voce pode escolher mapa de probabilidade, porcentagem, pontos ou melhor jogada.",
+    },
+    advancedStats: {
+      noteReady: "Metricas do jogo/sessao atual. A dificuldade do tabuleiro fica disponivel depois que as minas sao geradas.",
+      noteWaiting: "Abra uma celula para gerar as minas e as metricas de dificuldade do tabuleiro.",
+      cps: "CPS",
+      cpsTip: "Cliques por segundo: tentativas de clique concluidas divididas pelo tempo.",
+      threeBv: "3BV",
+      threeBvTip: "Bechtel's Board Benchmark Value: cliques esquerdos minimos para limpar o tabuleiro sem bandeiras.",
+      threeBvPerSecond: "3BV/s",
+      threeBvPerSecondTip: "Ritmo de solucao: 3BV dividido pelo tempo.",
+      ios: "IOS",
+      iosTip: "Index of Speed: log(3BV) dividido por log(tempo).",
+      rqp: "RQP",
+      rqpTip: "Rapport Qualite Prix com a formula configurada: tempo dividido por 3BV/s.",
+      ioe: "IOE",
+      ioeTip: "Index of Efficiency: 3BV dividido por cliques totais.",
+      correctness: "Correctness",
+      correctnessTip: "Cliques efetivos divididos por cliques totais. Um clique efetivo muda o tabuleiro.",
+      throughput: "Throughput",
+      throughputTip: "3BV dividido por cliques efetivos.",
+      zini: "ZiNi",
+      ziniTip: "Dificuldade com bandeiras. Solvers ZiNi greedy, aleatorio e humano estao planejados.",
+    },
+    credits: {
+      app:
+        "Campo Minado Trainer e um jogo AppMogged feito para Campo Minado classico, controles moveis, estatisticas locais e overlays de trainer.",
+      inspiration: "A direcao visual e inspirada no Campo Minado classico da Microsoft e na interface Windows XP Luna.",
+      fonts: "Os digitos dos contadores usam DSEG de keshikan. Os numeros do tabuleiro usam a fonte Mine Sweeper do FontStruct.",
+      tools: "Feito com TypeScript e Vite, com deploy estatico em appmogged.com/minesweeper.",
     },
   },
 };
@@ -452,10 +557,6 @@ export function languageLabel(language: LanguageCode, target: LanguageCode): str
 
 export function overlayLabel(language: LanguageCode, mode: OverlayMode): string {
   return translate(language, `overlay.${mode}`);
-}
-
-export function touchTapModeLabel(language: LanguageCode, mode: TouchTapMode): string {
-  return translate(language, `touchTapMode.${mode}`);
 }
 
 export function difficultyLabel(

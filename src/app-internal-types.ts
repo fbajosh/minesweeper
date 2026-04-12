@@ -9,6 +9,8 @@ export interface CellElements {
 export interface ActiveSession {
   createdAtIso: string;
   actions: GameActionRecord[];
+  totalClicks: number;
+  effectiveClicks: number;
   persisted: boolean;
   statsLocked: boolean;
 }
@@ -16,6 +18,8 @@ export interface ActiveSession {
 export interface UndoSnapshot {
   game: GameState;
   actionCount: number;
+  totalClicks: number;
+  effectiveClicks: number;
 }
 
 export interface PendingTap {

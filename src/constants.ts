@@ -21,7 +21,7 @@ export const DEFAULT_INTERACTION_SETTINGS: InteractionSettings = {
   doubleTapMs: 360,
   longPressMs: 380,
   dragThresholdPx: 10,
-  touchTapMode: "single-open",
+  singleClickChord: false,
 };
 
 export const DEFAULT_TRAINER_SETTINGS: TrainerSettings = {

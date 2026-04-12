@@ -17,9 +17,11 @@ import {
   dotBucket,
   formatCounter,
   formatDuration,
+  formatMinutesSeconds,
   requireElement,
   trainerMix,
 } from "./app-helpers";
+import { computeAdvancedStats, computeBoard3BV } from "./advanced-stats";
 import type {
   ActiveSession,
   CellElements,
@@ -37,6 +39,7 @@ import {
   createGame,
   getCell,
   getElapsedMs,
+  getNeighborIndices,
   isOversizedBoard,
   revealCell,
   toggleFlag,
@@ -47,7 +50,6 @@ import {
   languageLabel,
   overlayLabel,
   themeLabel,
-  touchTapModeLabel,
   translate,
 } from "./i18n";
 import { saveGameRecord } from "./storage";
@@ -67,7 +69,6 @@ import type {
   OverlayMode,
   PointerKind,
   ThemeName,
-  TouchTapMode,
   TrainerModel,
 } from "./types";
 
@@ -75,6 +76,10 @@ const COUNTER_MARQUEE_STEP_MS = 180;
 const MIN_DESKTOP_BOARD_WIDTH = 400;
 const BUILD_VERSION = import.meta.env.VITE_BUILD_VERSION?.trim() || "dev";
 const BEST_MOVE_EPSILON = 1e-9;
+const APP_MOGGED_URL = "https://appmogged.com/";
+const BOARD_ZOOM_STEP = 1.2;
+const BOARD_ZOOM_MIN_LEVEL = 0;
+const BOARD_ZOOM_MAX_LEVEL = 10;
 
 class MinesweeperApp {
   private settings: AppSettings = readStoredSettings();
@@ -103,6 +108,8 @@ class MinesweeperApp {
 
   private pendingTap: PendingTap | null = null;
 
+  private pendingMouseChord: PendingTap | null = null;
+
   private pointerSession: PointerSession | null = null;
 
   private hoveredIndex: number | null = null;
@@ -130,6 +137,8 @@ class MinesweeperApp {
   private displayRows = this.config.rows;
 
   private boardScale = 1;
+
+  private boardZoomLevel = 0;
 
   private rotatedBoard = false;
 
@@ -164,6 +173,10 @@ class MinesweeperApp {
   private readonly faceButton = requireElement<HTMLButtonElement>("#face-button");
 
   private readonly faceLabel = requireElement<HTMLElement>("#face-button-label");
+
+  private readonly zoomOutButton = requireElement<HTMLButtonElement>("#zoom-out-button");
+
+  private readonly zoomInButton = requireElement<HTMLButtonElement>("#zoom-in-button");
 
   private readonly titleMinimizeButton = requireElement<HTMLButtonElement>("#title-minimize");
 
@@ -207,7 +220,7 @@ class MinesweeperApp {
 
   private readonly dragThresholdValue = requireElement<HTMLElement>("#drag-threshold-value");
 
-  private readonly touchTapModeSelect = requireElement<HTMLSelectElement>("#touch-tap-mode-select");
+  private readonly singleClickChordCheckbox = requireElement<HTMLInputElement>("#single-click-chord-checkbox");
 
   private readonly bestTimesDialog = requireElement<HTMLDialogElement>("#best-times-dialog");
 
@@ -225,9 +238,17 @@ class MinesweeperApp {
 
   private readonly statsEmpty = requireElement<HTMLElement>("#stats-empty");
 
+  private readonly advancedStatisticsDialog = requireElement<HTMLDialogElement>("#advanced-statistics-dialog");
+
+  private readonly advancedStatsList = requireElement<HTMLElement>("#advanced-stats-list");
+
+  private readonly advancedStatisticsNote = requireElement<HTMLElement>("#advanced-statistics-note");
+
   private readonly controlsDialog = requireElement<HTMLDialogElement>("#controls-dialog");
 
   private readonly aboutDialog = requireElement<HTMLDialogElement>("#about-dialog");
+
+  private readonly creditsDialog = requireElement<HTMLDialogElement>("#credits-dialog");
 
   private readonly aboutVersion = requireElement<HTMLElement>("#about-version");
 
@@ -253,7 +274,12 @@ class MinesweeperApp {
     this.syncDesktopWindowFrame(true);
     this.syncBoardMetrics();
     this.renderAll();
-    this.timerHandle = window.setInterval(() => this.renderScoreboard(), TIMER_TICK_MS);
+    this.timerHandle = window.setInterval(() => {
+      this.renderScoreboard();
+      if (this.advancedStatisticsDialog.open) {
+        this.renderAdvancedStatisticsDialog();
+      }
+    }, TIMER_TICK_MS);
   }
 
   private bindEvents(): void {
@@ -269,6 +295,14 @@ class MinesweeperApp {
   }
 
   private bindFaceControls(): void {
+    this.zoomOutButton.addEventListener("click", () => {
+      this.changeBoardZoom(-1);
+    });
+
+    this.zoomInButton.addEventListener("click", () => {
+      this.changeBoardZoom(1);
+    });
+
     this.faceButton.addEventListener("click", () => {
       if (this.settings.trainer.enabled && this.game.status !== "won" && this.game.status !== "lost") {
         return;
@@ -442,7 +476,7 @@ class MinesweeperApp {
       this.settings.interaction.doubleTapMs = Number(this.doubleTapRange.value);
       this.settings.interaction.longPressMs = Number(this.longPressRange.value);
       this.settings.interaction.dragThresholdPx = Number(this.dragThresholdRange.value);
-      this.settings.interaction.touchTapMode = this.touchTapModeSelect.value as TouchTapMode;
+      this.settings.interaction.singleClickChord = this.singleClickChordCheckbox.checked;
       this.persistSettings();
       this.renderSettingsDialog();
     };
@@ -450,7 +484,7 @@ class MinesweeperApp {
     this.doubleTapRange.addEventListener("input", syncSettingsFromRanges);
     this.longPressRange.addEventListener("input", syncSettingsFromRanges);
     this.dragThresholdRange.addEventListener("input", syncSettingsFromRanges);
-    this.touchTapModeSelect.addEventListener("change", syncSettingsFromRanges);
+    this.singleClickChordCheckbox.addEventListener("change", syncSettingsFromRanges);
   }
 
   private bindMenuSelectionControls(): void {
@@ -523,17 +557,6 @@ class MinesweeperApp {
       this.performGameAction("flag", index, "right-click", "mouse");
     });
 
-    this.boardGrid.addEventListener("dblclick", (event) => {
-      const cellButton = this.getCellButtonFromEvent(event);
-      if (!cellButton) {
-        return;
-      }
-      event.preventDefault();
-      const index = Number(cellButton.dataset.index);
-      this.clearPendingTap();
-      this.performGameAction("chord", index, "double-click", "mouse");
-    });
-
     this.boardGrid.addEventListener("pointerdown", (event) => this.handleBoardPointerDown(event));
     this.boardViewport.addEventListener("pointermove", (event) => this.handleBoardPointerMove(event));
     this.boardViewport.addEventListener("pointerup", (event) => this.handleBoardPointerUp(event));
@@ -569,6 +592,8 @@ class MinesweeperApp {
     return {
       createdAtIso: new Date(this.game.createdAtMs).toISOString(),
       actions: [],
+      totalClicks: 0,
+      effectiveClicks: 0,
       persisted: false,
       statsLocked: false,
     };
@@ -633,6 +658,16 @@ class MinesweeperApp {
       return;
     }
 
+    if (action === "open-advanced-statistics-dialog") {
+      this.renderAdvancedStatisticsDialog();
+      this.closeMenus();
+      if (this.statisticsDialog.open) {
+        this.statisticsDialog.close();
+      }
+      this.advancedStatisticsDialog.showModal();
+      return;
+    }
+
     if (action === "toggle-trainer") {
       this.settings.trainer.enabled = !this.settings.trainer.enabled;
       this.trainerOverlayVisible = false;
@@ -657,6 +692,12 @@ class MinesweeperApp {
       return;
     }
 
+    if (action === "exit-app") {
+      this.closeMenus();
+      window.location.assign(APP_MOGGED_URL);
+      return;
+    }
+
     if (action === "open-controls-dialog") {
       this.closeMenus();
       this.controlsDialog.showModal();
@@ -667,6 +708,18 @@ class MinesweeperApp {
       this.closeMenus();
       this.renderAboutDialog();
       this.aboutDialog.showModal();
+      return;
+    }
+
+    if (action === "open-credits-dialog") {
+      this.closeMenus();
+      this.creditsDialog.showModal();
+      return;
+    }
+
+    if (action === "open-appmogged") {
+      this.closeMenus();
+      window.open(APP_MOGGED_URL, "_blank", "noopener,noreferrer");
     }
   }
 
@@ -723,12 +776,33 @@ class MinesweeperApp {
 
   private syncDesktopWindowFrame(recenter: boolean): void {
     const desktopMode = this.isDesktopWindowMode();
-    this.appWindow.classList.toggle("is-floating-window", desktopMode);
+    this.appWindow.classList.add("is-floating-window");
+    this.appWindow.classList.toggle("is-resizable-window", desktopMode);
 
     if (!desktopMode) {
-      this.appWindow.style.width = "";
-      this.appWindow.style.left = "";
-      this.appWindow.style.top = "";
+      const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
+      const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+      const mobileInset = 2;
+      const mobileWidth = Math.max(240, Math.floor(viewportWidth - mobileInset * 2));
+      this.appWindow.style.width = `${mobileWidth}px`;
+
+      const titleBarHeight = Math.max(29, Math.ceil(this.titleBar.getBoundingClientRect().height));
+      const visibleGrip = titleBarHeight;
+      const minLeft = Math.min(mobileInset, visibleGrip - mobileWidth);
+      const maxLeft = Math.max(mobileInset, viewportWidth - visibleGrip);
+      const minTop = mobileInset;
+      const maxTop = Math.max(mobileInset, viewportHeight - titleBarHeight - mobileInset);
+
+      if (recenter) {
+        this.windowLeft = Math.round((viewportWidth - mobileWidth) / 2);
+        this.windowTop = mobileInset;
+      } else {
+        this.windowLeft = clampValue(this.windowLeft, minLeft, maxLeft);
+        this.windowTop = clampValue(this.windowTop, minTop, maxTop);
+      }
+
+      this.appWindow.style.left = `${Math.round(this.windowLeft)}px`;
+      this.appWindow.style.top = `${Math.round(this.windowTop)}px`;
       return;
     }
 
@@ -760,7 +834,7 @@ class MinesweeperApp {
   }
 
   private handleWindowDragStart(event: PointerEvent): void {
-    if (!this.isDesktopWindowMode() || event.pointerType !== "mouse" || event.button !== 0) {
+    if (!this.appWindow.classList.contains("is-floating-window") || (event.pointerType === "mouse" && event.button !== 0)) {
       return;
     }
 
@@ -890,10 +964,11 @@ class MinesweeperApp {
     this.faceButton.classList.add("is-pressed");
     this.boardViewport.setPointerCapture(event.pointerId);
     this.renderScoreboard();
+    this.renderBoard();
 
-    if (pointerType !== "mouse") {
-      const targetCell = this.game.cells[index];
-      if (targetCell && !targetCell.revealed && this.game.status !== "won" && this.game.status !== "lost") {
+    const targetCell = this.game.cells[index];
+    if (targetCell && this.game.status !== "won" && this.game.status !== "lost") {
+      if (pointerType !== "mouse" && !targetCell.revealed) {
         this.pointerSession.holdTimerId = window.setTimeout(() => {
           if (!this.pointerSession || this.pointerSession.pointerId !== event.pointerId) {
             return;
@@ -905,6 +980,15 @@ class MinesweeperApp {
           }
           this.clearPointerSession();
           this.performGameAction("flag", index, "long-press", pointerType);
+        }, this.settings.interaction.longPressMs);
+      } else if (targetCell.revealed && targetCell.adjacentMines > 0) {
+        this.pointerSession.holdTimerId = window.setTimeout(() => {
+          if (!this.pointerSession || this.pointerSession.pointerId !== event.pointerId) {
+            return;
+          }
+          this.pointerSession.longPressTriggered = true;
+          this.renderScoreboard();
+          this.renderBoard();
         }, this.settings.interaction.longPressMs);
       }
     }
@@ -944,6 +1028,7 @@ class MinesweeperApp {
       this.clearPressedState();
       this.boardViewport.classList.add("is-dragging");
       this.renderScoreboard();
+      this.renderBoard();
     }
 
     if (!this.pointerSession.dragging) {
@@ -1002,8 +1087,17 @@ class MinesweeperApp {
         return;
       }
       if (event.shiftKey) {
+        this.clearPendingTap();
         this.performGameAction("chord", index, "shift-click", "mouse");
+      } else if (cell.revealed && cell.adjacentMines > 0) {
+        if (this.settings.interaction.singleClickChord) {
+          this.clearPendingTap();
+          this.performGameAction("chord", index, "single-click-chord", "mouse");
+        } else {
+          this.handleDesktopChordClick(index);
+        }
       } else if (!cell.revealed && !cell.flagged) {
+        this.clearPendingMouseChord();
         this.performGameAction("open", index, "left-click", "mouse");
       }
       return;
@@ -1034,25 +1128,20 @@ class MinesweeperApp {
       return;
     }
 
-    let action: "open" | "chord" | null = null;
-    let mode: "single" | "double" = "single";
-
     if (!cell.revealed && !cell.flagged) {
-      action = "open";
-      mode = this.settings.interaction.touchTapMode === "single-open" ? "single" : "double";
-    } else if (cell.revealed && cell.adjacentMines > 0) {
-      action = "chord";
-      mode = this.settings.interaction.touchTapMode === "single-open" ? "double" : "single";
+      this.clearPendingTap();
+      this.performGameAction("open", index, "single-tap", pointerType);
+      return;
     }
 
-    if (!action) {
+    if (!cell.revealed || cell.adjacentMines <= 0) {
       this.clearPendingTap();
       return;
     }
 
-    if (mode === "single") {
+    if (this.settings.interaction.singleClickChord) {
       this.clearPendingTap();
-      this.performGameAction(action, index, action === "open" ? "single-tap" : "single-tap-chord", pointerType);
+      this.performGameAction("chord", index, "single-tap-chord", pointerType);
       return;
     }
 
@@ -1063,7 +1152,32 @@ class MinesweeperApp {
 
     this.pendingTap = {
       index,
-      action,
+      action: "chord",
+      expiresAt: now + this.settings.interaction.doubleTapMs,
+      timerId,
+    };
+  }
+
+  private handleDesktopChordClick(index: number): void {
+    if (this.game.status === "won" || this.game.status === "lost") {
+      return;
+    }
+
+    const now = Date.now();
+    if (this.pendingMouseChord && this.pendingMouseChord.index === index && this.pendingMouseChord.expiresAt >= now) {
+      this.clearPendingMouseChord();
+      this.performGameAction("chord", index, "double-click", "mouse");
+      return;
+    }
+
+    this.clearPendingMouseChord();
+    const timerId = window.setTimeout(() => {
+      this.pendingMouseChord = null;
+    }, this.settings.interaction.doubleTapMs);
+
+    this.pendingMouseChord = {
+      index,
+      action: "chord",
       expiresAt: now + this.settings.interaction.doubleTapMs,
       timerId,
     };
@@ -1079,7 +1193,10 @@ class MinesweeperApp {
     const undoSnapshot: UndoSnapshot = {
       game: cloneGameState(this.game),
       actionCount: this.activeSession?.actions.length ?? 0,
+      totalClicks: this.activeSession?.totalClicks ?? 0,
+      effectiveClicks: this.activeSession?.effectiveClicks ?? 0,
     };
+    this.recordClickAttempt();
     const now = Date.now();
     let acted = false;
     let changedIndices: number[] = [];
@@ -1103,6 +1220,7 @@ class MinesweeperApp {
       return;
     }
 
+    this.recordEffectiveClick();
     this.undoStack.push(undoSnapshot);
     this.trainerOverlayVisible = false;
     this.logAction(actionType, gesture, pointerType, index, changedIndices, now);
@@ -1115,6 +1233,20 @@ class MinesweeperApp {
       this.startCounterMarquee(this.game.status === "won" ? "NIIICE" : "BOOOOM");
     }
     this.renderAll();
+  }
+
+  private recordClickAttempt(): void {
+    if (!this.activeSession) {
+      this.activeSession = this.createActiveSession();
+    }
+    this.activeSession.totalClicks += 1;
+  }
+
+  private recordEffectiveClick(): void {
+    if (!this.activeSession) {
+      this.activeSession = this.createActiveSession();
+    }
+    this.activeSession.effectiveClicks += 1;
   }
 
   private logAction(
@@ -1201,12 +1333,20 @@ class MinesweeperApp {
     }
 
     const outcome: GameOutcome = this.game.status === "won" ? "won" : this.game.status === "lost" ? "lost" : "abandoned";
-    const durationMs = getElapsedMs(this.game, Date.now());
+    const finishedAtMs = Date.now();
+    const finishedAtIso = new Date(finishedAtMs).toISOString();
+    const durationMs = getElapsedMs(this.game, finishedAtMs);
+    const gameStartedAtIso = this.game.startedAtMs === null ? null : new Date(this.game.startedAtMs).toISOString();
+    const advancedStats = computeAdvancedStats(this.game, {
+      totalClicks: this.activeSession.totalClicks,
+      effectiveClicks: this.activeSession.effectiveClicks,
+    }, finishedAtMs);
 
     const record = {
       id: this.game.id,
       createdAtIso: this.activeSession.createdAtIso,
-      finishedAtIso: new Date().toISOString(),
+      startedAtIso: gameStartedAtIso,
+      finishedAtIso,
       config: this.game.config,
       seed: this.game.seed,
       restartCount: this.game.restartCount,
@@ -1214,6 +1354,16 @@ class MinesweeperApp {
       outcome,
       durationMs,
       moveCount: this.game.moveCount,
+      totalClicks: this.activeSession.totalClicks,
+      effectiveClicks: this.activeSession.effectiveClicks,
+      board3BV: advancedStats.threeBv,
+      advancedStats: {
+        schemaVersion: 1 as const,
+        gameStartedAtIso,
+        gameCreatedAtIso: this.activeSession.createdAtIso,
+        gameFinishedAtIso: finishedAtIso,
+        ...advancedStats,
+      },
       actions: this.activeSession.actions,
     };
 
@@ -1316,6 +1466,8 @@ class MinesweeperApp {
     this.activeSession ??= this.createActiveSession();
     this.activeSession.statsLocked = true;
     this.activeSession.actions.length = snapshot.actionCount;
+    this.activeSession.totalClicks = snapshot.totalClicks;
+    this.activeSession.effectiveClicks = snapshot.effectiveClicks;
     this.statusOverrideKey = null;
     this.hoveredIndex = null;
     this.trainerOverlayVisible = false;
@@ -1381,13 +1533,14 @@ class MinesweeperApp {
     const widthScale = availableWidth / fitWidth;
     const heightScale = availableHeight / fitHeight;
     const preferredScale = Math.min(widthScale, heightScale);
-    const scale = Math.max(
+    const baseScale = Math.max(
       0.5,
       Math.min(
         maxScale,
         preferredScale,
       ),
     );
+    const scale = baseScale * BOARD_ZOOM_STEP ** this.boardZoomLevel;
 
     this.boardScale = scale;
 
@@ -1419,15 +1572,45 @@ class MinesweeperApp {
     }
   }
 
+  private changeBoardZoom(delta: number): void {
+    const nextZoomLevel = clampValue(this.boardZoomLevel + delta, BOARD_ZOOM_MIN_LEVEL, BOARD_ZOOM_MAX_LEVEL);
+    if (nextZoomLevel === this.boardZoomLevel) {
+      return;
+    }
+
+    const viewportWidth = this.boardViewport.clientWidth || 1;
+    const viewportHeight = this.boardViewport.clientHeight || 1;
+    const scrollWidth = this.boardViewport.scrollWidth || viewportWidth;
+    const scrollHeight = this.boardViewport.scrollHeight || viewportHeight;
+    const centerXRatio = (this.boardViewport.scrollLeft + viewportWidth / 2) / scrollWidth;
+    const centerYRatio = (this.boardViewport.scrollTop + viewportHeight / 2) / scrollHeight;
+
+    this.boardZoomLevel = nextZoomLevel;
+    this.syncBoardMetrics();
+    this.syncDesktopWindowFrame(false);
+    this.syncBoardMetrics();
+
+    this.boardViewport.scrollLeft = centerXRatio * this.boardViewport.scrollWidth - this.boardViewport.clientWidth / 2;
+    this.boardViewport.scrollTop = centerYRatio * this.boardViewport.scrollHeight - this.boardViewport.clientHeight / 2;
+    this.renderZoomControls();
+  }
+
   private renderAll(): void {
     this.renderMenuState();
     this.renderStatus();
     this.renderScoreboard();
     this.renderBoard();
     this.renderTrainerMeta();
+    this.renderZoomControls();
     this.renderSettingsDialog();
     this.renderStatisticsDialog();
+    this.renderAdvancedStatisticsDialog();
     this.renderBestTimesDialog();
+  }
+
+  private renderZoomControls(): void {
+    this.zoomOutButton.disabled = this.boardZoomLevel <= BOARD_ZOOM_MIN_LEVEL;
+    this.zoomInButton.disabled = this.boardZoomLevel >= BOARD_ZOOM_MAX_LEVEL;
   }
 
   private renderScoreboard(): void {
@@ -1437,8 +1620,8 @@ class MinesweeperApp {
     if (marqueeFrame) {
       this.mineCounterDisplay.classList.add("is-marquee");
       this.timerCounterDisplay.classList.add("is-marquee");
-      this.mineCounterUnderlay.textContent = "   ";
-      this.timerCounterUnderlay.textContent = "   ";
+      this.mineCounterUnderlay.textContent = "888";
+      this.timerCounterUnderlay.textContent = "888";
       this.mineCounter.textContent = marqueeFrame.slice(0, 3);
       this.timerCounter.textContent = marqueeFrame.slice(3, 6);
     } else {
@@ -1534,9 +1717,10 @@ class MinesweeperApp {
   private renderBoard(): void {
     const overlayMode = this.settings.trainer.overlayMode;
     const bestMoveProbability = this.findBestMoveProbability(overlayMode);
+    const chordPreviewIndices = this.getChordPreviewIndices();
 
     this.cellElements.forEach((elements, index) => {
-      this.renderCell(index, elements, overlayMode, bestMoveProbability);
+      this.renderCell(index, elements, overlayMode, bestMoveProbability, chordPreviewIndices);
     });
   }
 
@@ -1565,6 +1749,7 @@ class MinesweeperApp {
     { button, value, trainer }: CellElements,
     overlayMode: OverlayMode,
     bestMoveProbability: number | null,
+    chordPreviewIndices: Set<number>,
   ): void {
     const cell = this.game.cells[index];
     const probability = this.trainerModel.probabilities.get(index)?.probability;
@@ -1582,7 +1767,7 @@ class MinesweeperApp {
     button.classList.toggle("is-hidden", hidden);
     button.classList.toggle("is-revealed", !hidden);
 
-    if (this.isCellPressing(index)) {
+    if (this.isCellPressing(index) || chordPreviewIndices.has(index)) {
       button.classList.add("is-pressing");
     }
 
@@ -1639,6 +1824,29 @@ class MinesweeperApp {
     );
   }
 
+  private getChordPreviewIndices(): Set<number> {
+    if (
+      !this.pointerSession ||
+      this.pointerSession.dragging ||
+      (this.pointerSession.pointerType === "mouse" && !this.pointerSession.hoveringOrigin) ||
+      this.game.status !== "playing"
+    ) {
+      return new Set();
+    }
+
+    const cell = this.game.cells[this.pointerSession.cellIndex];
+    if (!cell?.revealed || cell.adjacentMines <= 0) {
+      return new Set();
+    }
+
+    return new Set(
+      getNeighborIndices(this.game, cell.index).filter((neighborIndex) => {
+        const neighbor = this.game.cells[neighborIndex];
+        return !neighbor.revealed && !neighbor.flagged;
+      }),
+    );
+  }
+
   private shouldShowTrainerForCell(
     cell: GameState["cells"][number],
     probability: number | undefined,
@@ -1667,7 +1875,7 @@ class MinesweeperApp {
     this.doubleTapRange.value = String(this.settings.interaction.doubleTapMs);
     this.longPressRange.value = String(this.settings.interaction.longPressMs);
     this.dragThresholdRange.value = String(this.settings.interaction.dragThresholdPx);
-    this.touchTapModeSelect.value = this.settings.interaction.touchTapMode;
+    this.singleClickChordCheckbox.checked = this.settings.interaction.singleClickChord;
 
     const language = this.settings.language;
     this.doubleTapValue.textContent = translate(language, "controls.milliseconds", {
@@ -1679,11 +1887,6 @@ class MinesweeperApp {
     this.dragThresholdValue.textContent = translate(language, "controls.pixels", {
       value: this.settings.interaction.dragThresholdPx,
     });
-
-    for (const option of [...this.touchTapModeSelect.options]) {
-      const value = option.value as TouchTapMode;
-      option.textContent = touchTapModeLabel(language, value);
-    }
   }
 
   private renderAboutDialog(): void {
@@ -1709,7 +1912,7 @@ class MinesweeperApp {
     this.bestTimesEmpty.hidden = true;
     for (const time of bucket.bestTimesMs) {
       const item = document.createElement("li");
-      item.textContent = formatDuration(time);
+      item.textContent = formatMinutesSeconds(time);
       this.bestTimesList.append(item);
     }
   }
@@ -1731,6 +1934,113 @@ class MinesweeperApp {
     this.populateStatsList(this.overallStatsList, overallBucket);
   }
 
+  private renderAdvancedStatisticsDialog(): void {
+    const language = this.settings.language;
+    const metrics = computeAdvancedStats(this.game, {
+      totalClicks: this.activeSession?.totalClicks ?? 0,
+      effectiveClicks: this.activeSession?.effectiveClicks ?? 0,
+    });
+
+    this.advancedStatisticsNote.textContent = this.game.minefieldGenerated
+      ? translate(language, "advancedStats.noteReady")
+      : translate(language, "advancedStats.noteWaiting");
+    this.advancedStatsList.replaceChildren();
+
+    const rows: Array<{
+      labelKey: string;
+      tooltipKey: string;
+      value: string;
+    }> = [
+      {
+        labelKey: "advancedStats.cps",
+        tooltipKey: "advancedStats.cpsTip",
+        value: this.formatAdvancedNumber(metrics.cps, 2),
+      },
+      {
+        labelKey: "advancedStats.threeBv",
+        tooltipKey: "advancedStats.threeBvTip",
+        value: this.formatAdvancedInteger(metrics.threeBv),
+      },
+      {
+        labelKey: "advancedStats.threeBvPerSecond",
+        tooltipKey: "advancedStats.threeBvPerSecondTip",
+        value: this.formatAdvancedNumber(metrics.threeBvPerSecond, 2),
+      },
+      {
+        labelKey: "advancedStats.ios",
+        tooltipKey: "advancedStats.iosTip",
+        value: this.formatAdvancedNumber(metrics.ios, 2),
+      },
+      {
+        labelKey: "advancedStats.rqp",
+        tooltipKey: "advancedStats.rqpTip",
+        value: this.formatAdvancedNumber(metrics.rqp, 2),
+      },
+      {
+        labelKey: "advancedStats.ioe",
+        tooltipKey: "advancedStats.ioeTip",
+        value: this.formatAdvancedNumber(metrics.ioe, 2),
+      },
+      {
+        labelKey: "advancedStats.correctness",
+        tooltipKey: "advancedStats.correctnessTip",
+        value: this.formatAdvancedPercent(metrics.correctness),
+      },
+      {
+        labelKey: "advancedStats.throughput",
+        tooltipKey: "advancedStats.throughputTip",
+        value: this.formatAdvancedNumber(metrics.throughput, 2),
+      },
+      {
+        labelKey: "advancedStats.zini",
+        tooltipKey: "advancedStats.ziniTip",
+        value: this.formatAdvancedInteger(metrics.zini),
+      },
+    ];
+
+    for (const row of rows) {
+      const term = document.createElement("dt");
+      const label = document.createElement("span");
+      label.textContent = translate(language, row.labelKey);
+
+      const info = document.createElement("span");
+      info.className = "stat-info";
+      info.textContent = "?";
+      info.title = translate(language, row.tooltipKey);
+      info.setAttribute("aria-label", info.title);
+
+      term.append(label, info);
+
+      const description = document.createElement("dd");
+      description.textContent = row.value;
+      this.advancedStatsList.append(term, description);
+    }
+  }
+
+  private formatAdvancedNumber(value: number | null, fractionDigits: number): string {
+    if (value === null || !Number.isFinite(value)) {
+      return "—";
+    }
+
+    return value.toFixed(fractionDigits);
+  }
+
+  private formatAdvancedInteger(value: number | null): string {
+    if (value === null || !Number.isFinite(value)) {
+      return "—";
+    }
+
+    return String(Math.round(value));
+  }
+
+  private formatAdvancedPercent(value: number | null): string {
+    if (value === null || !Number.isFinite(value)) {
+      return "—";
+    }
+
+    return `${(value * 100).toFixed(1)}%`;
+  }
+
   private populateStatsList(container: HTMLElement, bucket: { games: number; wins: number; losses: number; abandoned: number; totalDurationMs: number; fastestWinMs: number | null } | null): void {
     const language = this.settings.language;
     const rows = [
@@ -1742,7 +2052,7 @@ class MinesweeperApp {
         translate(language, "controls.averageTime"),
         bucket && bucket.games > 0 ? formatDuration(bucket.totalDurationMs / bucket.games) : "—",
       ],
-      [translate(language, "controls.fastestWin"), formatDuration(bucket?.fastestWinMs ?? null)],
+      [translate(language, "controls.fastestWin"), formatMinutesSeconds(bucket?.fastestWinMs ?? null)],
     ];
 
     for (const [label, value] of rows) {
@@ -1872,11 +2182,19 @@ class MinesweeperApp {
   }
 
   private clearPendingTap(): void {
-    if (!this.pendingTap) {
+    if (this.pendingTap) {
+      window.clearTimeout(this.pendingTap.timerId);
+      this.pendingTap = null;
+    }
+    this.clearPendingMouseChord();
+  }
+
+  private clearPendingMouseChord(): void {
+    if (!this.pendingMouseChord) {
       return;
     }
-    window.clearTimeout(this.pendingTap.timerId);
-    this.pendingTap = null;
+    window.clearTimeout(this.pendingMouseChord.timerId);
+    this.pendingMouseChord = null;
   }
 
   private clearLongPressTimer(): void {
@@ -1903,6 +2221,7 @@ class MinesweeperApp {
     this.pointerSession = null;
     this.faceButton.classList.remove("is-pressed");
     this.renderScoreboard();
+    this.renderBoard();
   }
 
   private clearWindowPointerSessions(): void {

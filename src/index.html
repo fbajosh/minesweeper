@@ -79,7 +79,7 @@
                 <button class="menu-entry" data-menu-action="undo-move" type="button" data-i18n="menu.undo">Undo</button>
                 <div class="menu-entry menu-entry-submenu" data-submenu-trigger="difficulty" tabindex="0">
                   <span data-i18n="menu.difficulty">Difficulty</span>
-                  <span class="submenu-arrow" aria-hidden="true">▶</span>
+                  <span class="submenu-arrow" aria-hidden="true"></span>
                   <div class="submenu-panel" data-submenu-panel="difficulty">
                     <button class="menu-entry menu-entry-radio" data-difficulty-level="1" type="button">1</button>
                     <button class="menu-entry menu-entry-radio" data-difficulty-level="2" type="button">2</button>
@@ -97,14 +97,21 @@
                 </div>
                 <div class="menu-separator"></div>
                 <button class="menu-entry" data-menu-action="open-best-times-dialog" type="button" data-i18n="menu.bestTimes">Best Times</button>
-                <button class="menu-entry" data-menu-action="open-statistics-dialog" type="button" data-i18n="menu.statistics">Statistics</button>
+                <div class="menu-entry menu-entry-submenu" data-submenu-trigger="statistics" tabindex="0">
+                  <span data-i18n="menu.statistics">Statistics</span>
+                  <span class="submenu-arrow" aria-hidden="true"></span>
+                  <div class="submenu-panel" data-submenu-panel="statistics">
+                    <button class="menu-entry" data-menu-action="open-statistics-dialog" type="button" data-i18n="menu.basicStatistics">Basic statistics</button>
+                    <button class="menu-entry" data-menu-action="open-advanced-statistics-dialog" type="button" data-i18n="menu.advancedStatistics">Advanced statistics</button>
+                  </div>
+                </div>
                 <div class="menu-separator"></div>
                 <button class="menu-entry menu-entry-checkbox" data-menu-action="toggle-sound" type="button" data-i18n="menu.sound">
                   Sound
                 </button>
                 <div class="menu-entry menu-entry-submenu" data-submenu-trigger="theme" tabindex="0">
                   <span data-i18n="menu.theme">Theme</span>
-                  <span class="submenu-arrow" aria-hidden="true">▶</span>
+                  <span class="submenu-arrow" aria-hidden="true"></span>
                   <div class="submenu-panel" data-submenu-panel="theme">
                     <button class="menu-entry menu-entry-radio" data-theme-name="xp-blue" type="button">Blue</button>
                     <button class="menu-entry menu-entry-radio" data-theme-name="xp-olive" type="button">Olive Green</button>
@@ -115,7 +122,7 @@
                 </div>
                 <div class="menu-entry menu-entry-submenu" data-submenu-trigger="language" tabindex="0">
                   <span data-i18n="menu.language">Language</span>
-                  <span class="submenu-arrow" aria-hidden="true">▶</span>
+                  <span class="submenu-arrow" aria-hidden="true"></span>
                   <div class="submenu-panel" data-submenu-panel="language">
                     <button class="menu-entry menu-entry-radio" data-language-code="en-US" type="button">English</button>
                     <button class="menu-entry menu-entry-radio" data-language-code="es-ES" type="button">Español</button>
@@ -125,6 +132,8 @@
                 <button class="menu-entry" data-menu-action="open-settings-dialog" type="button" data-i18n="menu.settings">
                   Additional settings...
                 </button>
+                <div class="menu-separator"></div>
+                <button class="menu-entry" data-menu-action="exit-app" type="button" data-i18n="menu.exit">Exit</button>
               </div>
             </div>
 
@@ -147,6 +156,9 @@
               <div class="menu-panel" data-menu-panel="help">
                 <button class="menu-entry" data-menu-action="open-controls-dialog" type="button" data-i18n="menu.controls">Controls</button>
                 <button class="menu-entry" data-menu-action="open-about-dialog" type="button" data-i18n="menu.about">About Minesweeper</button>
+                <button class="menu-entry" data-menu-action="open-credits-dialog" type="button" data-i18n="menu.credits">Credits</button>
+                <div class="menu-separator"></div>
+                <button class="menu-entry" data-menu-action="open-appmogged" type="button" data-i18n="menu.appmogged">Appmogged</button>
               </div>
             </div>
           </nav>
@@ -162,9 +174,19 @@
                 </div>
               </div>
 
-              <button class="face-button" id="face-button" type="button" aria-label="Restart" data-i18n-aria-label="controls.restart">
-                <span class="face-button-label" id="face-button-label" aria-hidden="true">:)</span>
-              </button>
+              <div class="score-controls">
+                <button class="face-button zoom-button" id="zoom-out-button" type="button" aria-label="Zoom out" data-i18n-aria-label="controls.zoomOut">
+                  <img class="zoom-button-icon" src="./assets/images/zoom-out.svg" alt="" aria-hidden="true" />
+                </button>
+
+                <button class="face-button" id="face-button" type="button" aria-label="Restart" data-i18n-aria-label="controls.restart">
+                  <span class="face-button-label" id="face-button-label" aria-hidden="true">:)</span>
+                </button>
+
+                <button class="face-button zoom-button" id="zoom-in-button" type="button" aria-label="Zoom in" data-i18n-aria-label="controls.zoomIn">
+                  <img class="zoom-button-icon" src="./assets/images/zoom-in.svg" alt="" aria-hidden="true" />
+                </button>
+              </div>
 
               <div class="counter-wrap">
                 <span class="visually-hidden" data-i18n="controls.time">Time</span>
@@ -248,12 +270,9 @@
             <input id="drag-threshold-range" type="range" min="4" max="32" step="1" />
             <strong id="drag-threshold-value"></strong>
           </label>
-          <label class="field-row field-row-stack" for="touch-tap-mode-select">
-            <span data-i18n="controls.tapMode">Touch tap behavior</span>
-            <select class="text-input" id="touch-tap-mode-select">
-              <option value="single-open"></option>
-              <option value="single-chord"></option>
-            </select>
+          <label class="field-row field-row-checkbox" for="single-click-chord-checkbox">
+            <span data-i18n="controls.singleClickChord">Single-click opened numbers</span>
+            <input id="single-click-chord-checkbox" type="checkbox" />
           </label>
         </div>
         <footer class="dialog-footer">
@@ -298,8 +317,24 @@
           </div>
           <p class="summary-empty" id="stats-empty" data-i18n="controls.noStats">No completed games recorded yet.</p>
         </div>
-        <footer class="dialog-footer">
+        <footer class="dialog-footer dialog-footer-split">
+          <button class="dialog-button" type="button" data-menu-action="open-advanced-statistics-dialog" data-i18n="controls.advanced">Advanced</button>
           <button class="dialog-button dialog-button-primary" type="button" data-dialog-close="statistics-dialog" data-i18n="controls.close">Close</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog class="xp-dialog" id="advanced-statistics-dialog">
+      <form class="dialog-card dialog-card-wide" method="dialog">
+        <header class="dialog-header">
+          <h2 class="dialog-title" data-i18n="dialogs.advancedStatisticsTitle">Advanced Statistics</h2>
+        </header>
+        <div class="dialog-body">
+          <p class="dialog-copy" id="advanced-statistics-note"></p>
+          <dl class="stats-list advanced-stats-list" id="advanced-stats-list"></dl>
+        </div>
+        <footer class="dialog-footer">
+          <button class="dialog-button dialog-button-primary" type="button" data-dialog-close="advanced-statistics-dialog" data-i18n="controls.close">Close</button>
         </footer>
       </form>
     </dialog>
@@ -339,6 +374,31 @@
         </div>
         <footer class="dialog-footer">
           <button class="dialog-button dialog-button-primary" type="button" data-dialog-close="about-dialog" data-i18n="controls.close">Close</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog class="xp-dialog" id="credits-dialog">
+      <form class="dialog-card" method="dialog">
+        <header class="dialog-header">
+          <h2 class="dialog-title" data-i18n="dialogs.creditsTitle">Credits</h2>
+        </header>
+        <div class="dialog-body">
+          <p class="dialog-copy" data-i18n="credits.app">
+            Minesweeper Trainer is an AppMogged game built for classic Minesweeper play, mobile controls, local stats, and trainer overlays.
+          </p>
+          <p class="dialog-copy" data-i18n="credits.inspiration">
+            Visual direction is inspired by classic Microsoft Minesweeper and the Windows XP Luna interface.
+          </p>
+          <p class="dialog-copy" data-i18n="credits.fonts">
+            Counter digits use DSEG by keshikan. Board numbers use the Mine Sweeper font from FontStruct.
+          </p>
+          <p class="dialog-copy" data-i18n="credits.tools">
+            Built with TypeScript and Vite, with static deployment to appmogged.com/minesweeper.
+          </p>
+        </div>
+        <footer class="dialog-footer">
+          <button class="dialog-button dialog-button-primary" type="button" data-dialog-close="credits-dialog" data-i18n="controls.close">Close</button>
         </footer>
       </form>
     </dialog>

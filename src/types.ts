@@ -4,7 +4,6 @@ export type DifficultyLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 export type DifficultyKind = "preset" | "custom";
 export type GameStatus = "ready" | "playing" | "won" | "lost";
 export type OverlayMode = "color" | "percent" | "dots" | "best-move";
-export type TouchTapMode = "single-open" | "single-chord";
 export type PointerKind = "mouse" | "touch" | "pen" | "keyboard" | "system";
 export type GameActionType = "open" | "flag" | "chord" | "new-game" | "restart";
 export type GameOutcome = "won" | "lost" | "abandoned";
@@ -67,7 +66,7 @@ export interface InteractionSettings {
   doubleTapMs: number;
   longPressMs: number;
   dragThresholdPx: number;
-  touchTapMode: TouchTapMode;
+  singleClickChord: boolean;
 }
 
 export interface TrainerSettings {
@@ -131,6 +130,7 @@ export interface GameActionRecord {
 export interface GameRecord {
   id: string;
   createdAtIso: string;
+  startedAtIso: string | null;
   finishedAtIso: string;
   config: BoardConfig;
   seed: number;
@@ -139,6 +139,27 @@ export interface GameRecord {
   outcome: GameOutcome;
   durationMs: number;
   moveCount: number;
+  totalClicks: number;
+  effectiveClicks: number;
+  board3BV: number | null;
+  advancedStats: {
+    schemaVersion: 1;
+    gameStartedAtIso: string | null;
+    gameCreatedAtIso: string;
+    gameFinishedAtIso: string;
+    elapsedSeconds: number;
+    totalClicks: number;
+    effectiveClicks: number;
+    cps: number | null;
+    threeBv: number | null;
+    threeBvPerSecond: number | null;
+    ios: number | null;
+    rqp: number | null;
+    ioe: number | null;
+    correctness: number | null;
+    throughput: number | null;
+    zini: number | null;
+  };
   actions: GameActionRecord[];
 }
 
