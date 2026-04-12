@@ -143,10 +143,11 @@ body {
 
 body {
   margin: 0;
-  background-image: url("./assets/images/background.webp");
+  background-image: var(--app-background-image, url("./assets/images/background.webp"));
   background-position: center center;
   background-repeat: no-repeat;
   background-size: cover;
+  background-color: var(--app-background-color, transparent);
   overflow: hidden;
   color: var(--text-primary);
   font-family: var(--ui-font);
@@ -160,6 +161,11 @@ body {
 :root[data-theme="mogged"] body {
   background-image: none;
   background-color: #080808;
+}
+
+:root[data-theme="astronomer"] body {
+  --app-background-image: url("./assets/images/astronomer-bg.webp");
+  --app-background-color: #050101;
 }
 
 button,
