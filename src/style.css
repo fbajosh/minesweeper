@@ -628,10 +628,6 @@ button {
   letter-spacing: 0.02em;
 }
 
-.counter-display.is-marquee .counter-display-underlay {
-  opacity: 0;
-}
-
 .counter-display.is-marquee .counter-display-value {
   transform: none;
 }
@@ -1038,6 +1034,10 @@ button {
 
 .field-row-stack {
   grid-template-columns: 1fr;
+}
+
+.field-row-checkbox {
+  grid-template-columns: 1fr auto;
 }
 
 .text-input {

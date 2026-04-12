@@ -17,6 +17,12 @@ type MoggedThemeResources = {
   background: MoggedBackgroundController;
 };
 
+type NavigatorWithAudioSession = Navigator & {
+  audioSession?: {
+    type: string;
+  };
+};
+
 export interface ThemeMediaSyncOptions {
   allowPlayback: boolean;
   boardHasStarted: boolean;
@@ -29,7 +35,22 @@ function createSound(url: string): HTMLAudioElement {
   return audio;
 }
 
+function configureAudioSession(): void {
+  const audioSession = (navigator as NavigatorWithAudioSession).audioSession;
+  if (!audioSession) {
+    return;
+  }
+
+  try {
+    audioSession.type = "ambient";
+  } catch {
+    // Audio Session is experimental and may reject unsupported values.
+  }
+}
+
 export function createThemeMediaController(themeBackground: HTMLCanvasElement) {
+  configureAudioSession();
+
   const sounds: Record<SoundEffectKey, HTMLAudioElement> = {
     flagged: createSound(flaggedSoundUrl),
     lose: createSound(loseSoundUrl),
@@ -103,6 +124,7 @@ export function createThemeMediaController(themeBackground: HTMLCanvasElement) {
   }
 
   function playBaseSoundEffect(effect: SoundEffectKey): void {
+    configureAudioSession();
     const audio = sounds[effect];
     audio.currentTime = 0;
     void audio.play().catch(() => {
@@ -117,6 +139,7 @@ export function createThemeMediaController(themeBackground: HTMLCanvasElement) {
         return;
       }
 
+      configureAudioSession();
       resources.effect.pause();
       resources.effect.currentTime = 0;
       void resources.effect.play().catch(() => {
@@ -152,6 +175,7 @@ export function createThemeMediaController(themeBackground: HTMLCanvasElement) {
       return;
     }
 
+    configureAudioSession();
     void moggedThemeResources.music.play().catch(() => {
       // Playback may be blocked until a user gesture.
     });

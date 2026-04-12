@@ -17,6 +17,7 @@ import {
   dotBucket,
   formatCounter,
   formatDuration,
+  formatMinutesSeconds,
   requireElement,
   trainerMix,
 } from "./app-helpers";
@@ -37,6 +38,7 @@ import {
   createGame,
   getCell,
   getElapsedMs,
+  getNeighborIndices,
   isOversizedBoard,
   revealCell,
   toggleFlag,
@@ -47,7 +49,6 @@ import {
   languageLabel,
   overlayLabel,
   themeLabel,
-  touchTapModeLabel,
   translate,
 } from "./i18n";
 import { saveGameRecord } from "./storage";
@@ -67,7 +68,6 @@ import type {
   OverlayMode,
   PointerKind,
   ThemeName,
-  TouchTapMode,
   TrainerModel,
 } from "./types";
 
@@ -75,6 +75,7 @@ const COUNTER_MARQUEE_STEP_MS = 180;
 const MIN_DESKTOP_BOARD_WIDTH = 400;
 const BUILD_VERSION = import.meta.env.VITE_BUILD_VERSION?.trim() || "dev";
 const BEST_MOVE_EPSILON = 1e-9;
+const APP_MOGGED_URL = "https://appmogged.com/";
 
 class MinesweeperApp {
   private settings: AppSettings = readStoredSettings();
@@ -102,6 +103,8 @@ class MinesweeperApp {
   private openMenuName: string | null = null;
 
   private pendingTap: PendingTap | null = null;
+
+  private pendingMouseChord: PendingTap | null = null;
 
   private pointerSession: PointerSession | null = null;
 
@@ -207,7 +210,7 @@ class MinesweeperApp {
 
   private readonly dragThresholdValue = requireElement<HTMLElement>("#drag-threshold-value");
 
-  private readonly touchTapModeSelect = requireElement<HTMLSelectElement>("#touch-tap-mode-select");
+  private readonly singleClickChordCheckbox = requireElement<HTMLInputElement>("#single-click-chord-checkbox");
 
   private readonly bestTimesDialog = requireElement<HTMLDialogElement>("#best-times-dialog");
 
@@ -228,6 +231,8 @@ class MinesweeperApp {
   private readonly controlsDialog = requireElement<HTMLDialogElement>("#controls-dialog");
 
   private readonly aboutDialog = requireElement<HTMLDialogElement>("#about-dialog");
+
+  private readonly creditsDialog = requireElement<HTMLDialogElement>("#credits-dialog");
 
   private readonly aboutVersion = requireElement<HTMLElement>("#about-version");
 
@@ -442,7 +447,7 @@ class MinesweeperApp {
       this.settings.interaction.doubleTapMs = Number(this.doubleTapRange.value);
       this.settings.interaction.longPressMs = Number(this.longPressRange.value);
       this.settings.interaction.dragThresholdPx = Number(this.dragThresholdRange.value);
-      this.settings.interaction.touchTapMode = this.touchTapModeSelect.value as TouchTapMode;
+      this.settings.interaction.singleClickChord = this.singleClickChordCheckbox.checked;
       this.persistSettings();
       this.renderSettingsDialog();
     };
@@ -450,7 +455,7 @@ class MinesweeperApp {
     this.doubleTapRange.addEventListener("input", syncSettingsFromRanges);
     this.longPressRange.addEventListener("input", syncSettingsFromRanges);
     this.dragThresholdRange.addEventListener("input", syncSettingsFromRanges);
-    this.touchTapModeSelect.addEventListener("change", syncSettingsFromRanges);
+    this.singleClickChordCheckbox.addEventListener("change", syncSettingsFromRanges);
   }
 
   private bindMenuSelectionControls(): void {
@@ -521,17 +526,6 @@ class MinesweeperApp {
       const index = Number(cellButton.dataset.index);
       this.clearPendingTap();
       this.performGameAction("flag", index, "right-click", "mouse");
-    });
-
-    this.boardGrid.addEventListener("dblclick", (event) => {
-      const cellButton = this.getCellButtonFromEvent(event);
-      if (!cellButton) {
-        return;
-      }
-      event.preventDefault();
-      const index = Number(cellButton.dataset.index);
-      this.clearPendingTap();
-      this.performGameAction("chord", index, "double-click", "mouse");
     });
 
     this.boardGrid.addEventListener("pointerdown", (event) => this.handleBoardPointerDown(event));
@@ -657,6 +651,12 @@ class MinesweeperApp {
       return;
     }
 
+    if (action === "exit-app") {
+      this.closeMenus();
+      window.location.assign(APP_MOGGED_URL);
+      return;
+    }
+
     if (action === "open-controls-dialog") {
       this.closeMenus();
       this.controlsDialog.showModal();
@@ -667,6 +667,18 @@ class MinesweeperApp {
       this.closeMenus();
       this.renderAboutDialog();
       this.aboutDialog.showModal();
+      return;
+    }
+
+    if (action === "open-credits-dialog") {
+      this.closeMenus();
+      this.creditsDialog.showModal();
+      return;
+    }
+
+    if (action === "open-appmogged") {
+      this.closeMenus();
+      window.open(APP_MOGGED_URL, "_blank", "noopener,noreferrer");
     }
   }
 
@@ -890,10 +902,11 @@ class MinesweeperApp {
     this.faceButton.classList.add("is-pressed");
     this.boardViewport.setPointerCapture(event.pointerId);
     this.renderScoreboard();
+    this.renderBoard();
 
-    if (pointerType !== "mouse") {
-      const targetCell = this.game.cells[index];
-      if (targetCell && !targetCell.revealed && this.game.status !== "won" && this.game.status !== "lost") {
+    const targetCell = this.game.cells[index];
+    if (targetCell && this.game.status !== "won" && this.game.status !== "lost") {
+      if (pointerType !== "mouse" && !targetCell.revealed) {
         this.pointerSession.holdTimerId = window.setTimeout(() => {
           if (!this.pointerSession || this.pointerSession.pointerId !== event.pointerId) {
             return;
@@ -905,6 +918,15 @@ class MinesweeperApp {
           }
           this.clearPointerSession();
           this.performGameAction("flag", index, "long-press", pointerType);
+        }, this.settings.interaction.longPressMs);
+      } else if (targetCell.revealed && targetCell.adjacentMines > 0) {
+        this.pointerSession.holdTimerId = window.setTimeout(() => {
+          if (!this.pointerSession || this.pointerSession.pointerId !== event.pointerId) {
+            return;
+          }
+          this.pointerSession.longPressTriggered = true;
+          this.renderScoreboard();
+          this.renderBoard();
         }, this.settings.interaction.longPressMs);
       }
     }
@@ -944,6 +966,7 @@ class MinesweeperApp {
       this.clearPressedState();
       this.boardViewport.classList.add("is-dragging");
       this.renderScoreboard();
+      this.renderBoard();
     }
 
     if (!this.pointerSession.dragging) {
@@ -1002,8 +1025,17 @@ class MinesweeperApp {
         return;
       }
       if (event.shiftKey) {
+        this.clearPendingTap();
         this.performGameAction("chord", index, "shift-click", "mouse");
+      } else if (cell.revealed && cell.adjacentMines > 0) {
+        if (this.settings.interaction.singleClickChord) {
+          this.clearPendingTap();
+          this.performGameAction("chord", index, "single-click-chord", "mouse");
+        } else {
+          this.handleDesktopChordClick(index);
+        }
       } else if (!cell.revealed && !cell.flagged) {
+        this.clearPendingMouseChord();
         this.performGameAction("open", index, "left-click", "mouse");
       }
       return;
@@ -1034,25 +1066,20 @@ class MinesweeperApp {
       return;
     }
 
-    let action: "open" | "chord" | null = null;
-    let mode: "single" | "double" = "single";
-
     if (!cell.revealed && !cell.flagged) {
-      action = "open";
-      mode = this.settings.interaction.touchTapMode === "single-open" ? "single" : "double";
-    } else if (cell.revealed && cell.adjacentMines > 0) {
-      action = "chord";
-      mode = this.settings.interaction.touchTapMode === "single-open" ? "double" : "single";
+      this.clearPendingTap();
+      this.performGameAction("open", index, "single-tap", pointerType);
+      return;
     }
 
-    if (!action) {
+    if (!cell.revealed || cell.adjacentMines <= 0) {
       this.clearPendingTap();
       return;
     }
 
-    if (mode === "single") {
+    if (this.settings.interaction.singleClickChord) {
       this.clearPendingTap();
-      this.performGameAction(action, index, action === "open" ? "single-tap" : "single-tap-chord", pointerType);
+      this.performGameAction("chord", index, "single-tap-chord", pointerType);
       return;
     }
 
@@ -1063,7 +1090,32 @@ class MinesweeperApp {
 
     this.pendingTap = {
       index,
-      action,
+      action: "chord",
+      expiresAt: now + this.settings.interaction.doubleTapMs,
+      timerId,
+    };
+  }
+
+  private handleDesktopChordClick(index: number): void {
+    if (this.game.status === "won" || this.game.status === "lost") {
+      return;
+    }
+
+    const now = Date.now();
+    if (this.pendingMouseChord && this.pendingMouseChord.index === index && this.pendingMouseChord.expiresAt >= now) {
+      this.clearPendingMouseChord();
+      this.performGameAction("chord", index, "double-click", "mouse");
+      return;
+    }
+
+    this.clearPendingMouseChord();
+    const timerId = window.setTimeout(() => {
+      this.pendingMouseChord = null;
+    }, this.settings.interaction.doubleTapMs);
+
+    this.pendingMouseChord = {
+      index,
+      action: "chord",
       expiresAt: now + this.settings.interaction.doubleTapMs,
       timerId,
     };
@@ -1437,8 +1489,8 @@ class MinesweeperApp {
     if (marqueeFrame) {
       this.mineCounterDisplay.classList.add("is-marquee");
       this.timerCounterDisplay.classList.add("is-marquee");
-      this.mineCounterUnderlay.textContent = "   ";
-      this.timerCounterUnderlay.textContent = "   ";
+      this.mineCounterUnderlay.textContent = "888";
+      this.timerCounterUnderlay.textContent = "888";
       this.mineCounter.textContent = marqueeFrame.slice(0, 3);
       this.timerCounter.textContent = marqueeFrame.slice(3, 6);
     } else {
@@ -1534,9 +1586,10 @@ class MinesweeperApp {
   private renderBoard(): void {
     const overlayMode = this.settings.trainer.overlayMode;
     const bestMoveProbability = this.findBestMoveProbability(overlayMode);
+    const chordPreviewIndices = this.getChordPreviewIndices();
 
     this.cellElements.forEach((elements, index) => {
-      this.renderCell(index, elements, overlayMode, bestMoveProbability);
+      this.renderCell(index, elements, overlayMode, bestMoveProbability, chordPreviewIndices);
     });
   }
 
@@ -1565,6 +1618,7 @@ class MinesweeperApp {
     { button, value, trainer }: CellElements,
     overlayMode: OverlayMode,
     bestMoveProbability: number | null,
+    chordPreviewIndices: Set<number>,
   ): void {
     const cell = this.game.cells[index];
     const probability = this.trainerModel.probabilities.get(index)?.probability;
@@ -1582,7 +1636,7 @@ class MinesweeperApp {
     button.classList.toggle("is-hidden", hidden);
     button.classList.toggle("is-revealed", !hidden);
 
-    if (this.isCellPressing(index)) {
+    if (this.isCellPressing(index) || chordPreviewIndices.has(index)) {
       button.classList.add("is-pressing");
     }
 
@@ -1639,6 +1693,29 @@ class MinesweeperApp {
     );
   }
 
+  private getChordPreviewIndices(): Set<number> {
+    if (
+      !this.pointerSession ||
+      this.pointerSession.dragging ||
+      (this.pointerSession.pointerType === "mouse" && !this.pointerSession.hoveringOrigin) ||
+      this.game.status !== "playing"
+    ) {
+      return new Set();
+    }
+
+    const cell = this.game.cells[this.pointerSession.cellIndex];
+    if (!cell?.revealed || cell.adjacentMines <= 0) {
+      return new Set();
+    }
+
+    return new Set(
+      getNeighborIndices(this.game, cell.index).filter((neighborIndex) => {
+        const neighbor = this.game.cells[neighborIndex];
+        return !neighbor.revealed && !neighbor.flagged;
+      }),
+    );
+  }
+
   private shouldShowTrainerForCell(
     cell: GameState["cells"][number],
     probability: number | undefined,
@@ -1667,7 +1744,7 @@ class MinesweeperApp {
     this.doubleTapRange.value = String(this.settings.interaction.doubleTapMs);
     this.longPressRange.value = String(this.settings.interaction.longPressMs);
     this.dragThresholdRange.value = String(this.settings.interaction.dragThresholdPx);
-    this.touchTapModeSelect.value = this.settings.interaction.touchTapMode;
+    this.singleClickChordCheckbox.checked = this.settings.interaction.singleClickChord;
 
     const language = this.settings.language;
     this.doubleTapValue.textContent = translate(language, "controls.milliseconds", {
@@ -1679,11 +1756,6 @@ class MinesweeperApp {
     this.dragThresholdValue.textContent = translate(language, "controls.pixels", {
       value: this.settings.interaction.dragThresholdPx,
     });
-
-    for (const option of [...this.touchTapModeSelect.options]) {
-      const value = option.value as TouchTapMode;
-      option.textContent = touchTapModeLabel(language, value);
-    }
   }
 
   private renderAboutDialog(): void {
@@ -1709,7 +1781,7 @@ class MinesweeperApp {
     this.bestTimesEmpty.hidden = true;
     for (const time of bucket.bestTimesMs) {
       const item = document.createElement("li");
-      item.textContent = formatDuration(time);
+      item.textContent = formatMinutesSeconds(time);
       this.bestTimesList.append(item);
     }
   }
@@ -1742,7 +1814,7 @@ class MinesweeperApp {
         translate(language, "controls.averageTime"),
         bucket && bucket.games > 0 ? formatDuration(bucket.totalDurationMs / bucket.games) : "—",
       ],
-      [translate(language, "controls.fastestWin"), formatDuration(bucket?.fastestWinMs ?? null)],
+      [translate(language, "controls.fastestWin"), formatMinutesSeconds(bucket?.fastestWinMs ?? null)],
     ];
 
     for (const [label, value] of rows) {
@@ -1872,11 +1944,19 @@ class MinesweeperApp {
   }
 
   private clearPendingTap(): void {
-    if (!this.pendingTap) {
+    if (this.pendingTap) {
+      window.clearTimeout(this.pendingTap.timerId);
+      this.pendingTap = null;
+    }
+    this.clearPendingMouseChord();
+  }
+
+  private clearPendingMouseChord(): void {
+    if (!this.pendingMouseChord) {
       return;
     }
-    window.clearTimeout(this.pendingTap.timerId);
-    this.pendingTap = null;
+    window.clearTimeout(this.pendingMouseChord.timerId);
+    this.pendingMouseChord = null;
   }
 
   private clearLongPressTimer(): void {
@@ -1903,6 +1983,7 @@ class MinesweeperApp {
     this.pointerSession = null;
     this.faceButton.classList.remove("is-pressed");
     this.renderScoreboard();
+    this.renderBoard();
   }
 
   private clearWindowPointerSessions(): void {

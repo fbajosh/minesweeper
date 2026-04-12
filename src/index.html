@@ -125,6 +125,8 @@
                 <button class="menu-entry" data-menu-action="open-settings-dialog" type="button" data-i18n="menu.settings">
                   Additional settings...
                 </button>
+                <div class="menu-separator"></div>
+                <button class="menu-entry" data-menu-action="exit-app" type="button" data-i18n="menu.exit">Exit</button>
               </div>
             </div>
 
@@ -147,6 +149,9 @@
               <div class="menu-panel" data-menu-panel="help">
                 <button class="menu-entry" data-menu-action="open-controls-dialog" type="button" data-i18n="menu.controls">Controls</button>
                 <button class="menu-entry" data-menu-action="open-about-dialog" type="button" data-i18n="menu.about">About Minesweeper</button>
+                <button class="menu-entry" data-menu-action="open-credits-dialog" type="button" data-i18n="menu.credits">Credits</button>
+                <div class="menu-separator"></div>
+                <button class="menu-entry" data-menu-action="open-appmogged" type="button" data-i18n="menu.appmogged">Appmogged</button>
               </div>
             </div>
           </nav>
@@ -248,12 +253,9 @@
             <input id="drag-threshold-range" type="range" min="4" max="32" step="1" />
             <strong id="drag-threshold-value"></strong>
           </label>
-          <label class="field-row field-row-stack" for="touch-tap-mode-select">
-            <span data-i18n="controls.tapMode">Touch tap behavior</span>
-            <select class="text-input" id="touch-tap-mode-select">
-              <option value="single-open"></option>
-              <option value="single-chord"></option>
-            </select>
+          <label class="field-row field-row-checkbox" for="single-click-chord-checkbox">
+            <span data-i18n="controls.singleClickChord">Single-click opened numbers</span>
+            <input id="single-click-chord-checkbox" type="checkbox" />
           </label>
         </div>
         <footer class="dialog-footer">
@@ -339,6 +341,31 @@
         </div>
         <footer class="dialog-footer">
           <button class="dialog-button dialog-button-primary" type="button" data-dialog-close="about-dialog" data-i18n="controls.close">Close</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog class="xp-dialog" id="credits-dialog">
+      <form class="dialog-card" method="dialog">
+        <header class="dialog-header">
+          <h2 class="dialog-title" data-i18n="dialogs.creditsTitle">Credits</h2>
+        </header>
+        <div class="dialog-body">
+          <p class="dialog-copy" data-i18n="credits.app">
+            Minesweeper Trainer is an AppMogged game built for classic Minesweeper play, mobile controls, local stats, and trainer overlays.
+          </p>
+          <p class="dialog-copy" data-i18n="credits.inspiration">
+            Visual direction is inspired by classic Microsoft Minesweeper and the Windows XP Luna interface.
+          </p>
+          <p class="dialog-copy" data-i18n="credits.fonts">
+            Counter digits use DSEG by keshikan. Board numbers use the Mine Sweeper font from FontStruct.
+          </p>
+          <p class="dialog-copy" data-i18n="credits.tools">
+            Built with TypeScript and Vite, with static deployment to appmogged.com/minesweeper.
+          </p>
+        </div>
+        <footer class="dialog-footer">
+          <button class="dialog-button dialog-button-primary" type="button" data-dialog-close="credits-dialog" data-i18n="controls.close">Close</button>
         </footer>
       </form>
     </dialog>

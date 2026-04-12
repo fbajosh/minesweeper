@@ -4,7 +4,6 @@ export type DifficultyLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 export type DifficultyKind = "preset" | "custom";
 export type GameStatus = "ready" | "playing" | "won" | "lost";
 export type OverlayMode = "color" | "percent" | "dots" | "best-move";
-export type TouchTapMode = "single-open" | "single-chord";
 export type PointerKind = "mouse" | "touch" | "pen" | "keyboard" | "system";
 export type GameActionType = "open" | "flag" | "chord" | "new-game" | "restart";
 export type GameOutcome = "won" | "lost" | "abandoned";
@@ -67,7 +66,7 @@ export interface InteractionSettings {
   doubleTapMs: number;
   longPressMs: number;
   dragThresholdPx: number;
-  touchTapMode: TouchTapMode;
+  singleClickChord: boolean;
 }
 
 export interface TrainerSettings {
