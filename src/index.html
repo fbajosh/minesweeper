@@ -97,7 +97,14 @@
                 </div>
                 <div class="menu-separator"></div>
                 <button class="menu-entry" data-menu-action="open-best-times-dialog" type="button" data-i18n="menu.bestTimes">Best Times</button>
-                <button class="menu-entry" data-menu-action="open-statistics-dialog" type="button" data-i18n="menu.statistics">Statistics</button>
+                <div class="menu-entry menu-entry-submenu" data-submenu-trigger="statistics" tabindex="0">
+                  <span data-i18n="menu.statistics">Statistics</span>
+                  <span class="submenu-arrow" aria-hidden="true"></span>
+                  <div class="submenu-panel" data-submenu-panel="statistics">
+                    <button class="menu-entry" data-menu-action="open-statistics-dialog" type="button" data-i18n="menu.basicStatistics">Basic statistics</button>
+                    <button class="menu-entry" data-menu-action="open-advanced-statistics-dialog" type="button" data-i18n="menu.advancedStatistics">Advanced statistics</button>
+                  </div>
+                </div>
                 <div class="menu-separator"></div>
                 <button class="menu-entry menu-entry-checkbox" data-menu-action="toggle-sound" type="button" data-i18n="menu.sound">
                   Sound
@@ -310,8 +317,24 @@
           </div>
           <p class="summary-empty" id="stats-empty" data-i18n="controls.noStats">No completed games recorded yet.</p>
         </div>
-        <footer class="dialog-footer">
+        <footer class="dialog-footer dialog-footer-split">
+          <button class="dialog-button" type="button" data-menu-action="open-advanced-statistics-dialog" data-i18n="controls.advanced">Advanced</button>
           <button class="dialog-button dialog-button-primary" type="button" data-dialog-close="statistics-dialog" data-i18n="controls.close">Close</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog class="xp-dialog" id="advanced-statistics-dialog">
+      <form class="dialog-card dialog-card-wide" method="dialog">
+        <header class="dialog-header">
+          <h2 class="dialog-title" data-i18n="dialogs.advancedStatisticsTitle">Advanced Statistics</h2>
+        </header>
+        <div class="dialog-body">
+          <p class="dialog-copy" id="advanced-statistics-note"></p>
+          <dl class="stats-list advanced-stats-list" id="advanced-stats-list"></dl>
+        </div>
+        <footer class="dialog-footer">
+          <button class="dialog-button dialog-button-primary" type="button" data-dialog-close="advanced-statistics-dialog" data-i18n="controls.close">Close</button>
         </footer>
       </form>
     </dialog>

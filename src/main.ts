@@ -21,6 +21,7 @@ import {
   requireElement,
   trainerMix,
 } from "./app-helpers";
+import { computeAdvancedStats, computeBoard3BV } from "./advanced-stats";
 import type {
   ActiveSession,
   CellElements,
@@ -237,6 +238,12 @@ class MinesweeperApp {
 
   private readonly statsEmpty = requireElement<HTMLElement>("#stats-empty");
 
+  private readonly advancedStatisticsDialog = requireElement<HTMLDialogElement>("#advanced-statistics-dialog");
+
+  private readonly advancedStatsList = requireElement<HTMLElement>("#advanced-stats-list");
+
+  private readonly advancedStatisticsNote = requireElement<HTMLElement>("#advanced-statistics-note");
+
   private readonly controlsDialog = requireElement<HTMLDialogElement>("#controls-dialog");
 
   private readonly aboutDialog = requireElement<HTMLDialogElement>("#about-dialog");
@@ -267,7 +274,12 @@ class MinesweeperApp {
     this.syncDesktopWindowFrame(true);
     this.syncBoardMetrics();
     this.renderAll();
-    this.timerHandle = window.setInterval(() => this.renderScoreboard(), TIMER_TICK_MS);
+    this.timerHandle = window.setInterval(() => {
+      this.renderScoreboard();
+      if (this.advancedStatisticsDialog.open) {
+        this.renderAdvancedStatisticsDialog();
+      }
+    }, TIMER_TICK_MS);
   }
 
   private bindEvents(): void {
@@ -580,6 +592,8 @@ class MinesweeperApp {
     return {
       createdAtIso: new Date(this.game.createdAtMs).toISOString(),
       actions: [],
+      totalClicks: 0,
+      effectiveClicks: 0,
       persisted: false,
       statsLocked: false,
     };
@@ -641,6 +655,16 @@ class MinesweeperApp {
       this.renderStatisticsDialog();
       this.closeMenus();
       this.statisticsDialog.showModal();
+      return;
+    }
+
+    if (action === "open-advanced-statistics-dialog") {
+      this.renderAdvancedStatisticsDialog();
+      this.closeMenus();
+      if (this.statisticsDialog.open) {
+        this.statisticsDialog.close();
+      }
+      this.advancedStatisticsDialog.showModal();
       return;
     }
 
@@ -1169,7 +1193,10 @@ class MinesweeperApp {
     const undoSnapshot: UndoSnapshot = {
       game: cloneGameState(this.game),
       actionCount: this.activeSession?.actions.length ?? 0,
+      totalClicks: this.activeSession?.totalClicks ?? 0,
+      effectiveClicks: this.activeSession?.effectiveClicks ?? 0,
     };
+    this.recordClickAttempt();
     const now = Date.now();
     let acted = false;
     let changedIndices: number[] = [];
@@ -1193,6 +1220,7 @@ class MinesweeperApp {
       return;
     }
 
+    this.recordEffectiveClick();
     this.undoStack.push(undoSnapshot);
     this.trainerOverlayVisible = false;
     this.logAction(actionType, gesture, pointerType, index, changedIndices, now);
@@ -1205,6 +1233,20 @@ class MinesweeperApp {
       this.startCounterMarquee(this.game.status === "won" ? "NIIICE" : "BOOOOM");
     }
     this.renderAll();
+  }
+
+  private recordClickAttempt(): void {
+    if (!this.activeSession) {
+      this.activeSession = this.createActiveSession();
+    }
+    this.activeSession.totalClicks += 1;
+  }
+
+  private recordEffectiveClick(): void {
+    if (!this.activeSession) {
+      this.activeSession = this.createActiveSession();
+    }
+    this.activeSession.effectiveClicks += 1;
   }
 
   private logAction(
@@ -1291,12 +1333,20 @@ class MinesweeperApp {
     }
 
     const outcome: GameOutcome = this.game.status === "won" ? "won" : this.game.status === "lost" ? "lost" : "abandoned";
-    const durationMs = getElapsedMs(this.game, Date.now());
+    const finishedAtMs = Date.now();
+    const finishedAtIso = new Date(finishedAtMs).toISOString();
+    const durationMs = getElapsedMs(this.game, finishedAtMs);
+    const gameStartedAtIso = this.game.startedAtMs === null ? null : new Date(this.game.startedAtMs).toISOString();
+    const advancedStats = computeAdvancedStats(this.game, {
+      totalClicks: this.activeSession.totalClicks,
+      effectiveClicks: this.activeSession.effectiveClicks,
+    }, finishedAtMs);
 
     const record = {
       id: this.game.id,
       createdAtIso: this.activeSession.createdAtIso,
-      finishedAtIso: new Date().toISOString(),
+      startedAtIso: gameStartedAtIso,
+      finishedAtIso,
       config: this.game.config,
       seed: this.game.seed,
       restartCount: this.game.restartCount,
@@ -1304,6 +1354,16 @@ class MinesweeperApp {
       outcome,
       durationMs,
       moveCount: this.game.moveCount,
+      totalClicks: this.activeSession.totalClicks,
+      effectiveClicks: this.activeSession.effectiveClicks,
+      board3BV: advancedStats.threeBv,
+      advancedStats: {
+        schemaVersion: 1 as const,
+        gameStartedAtIso,
+        gameCreatedAtIso: this.activeSession.createdAtIso,
+        gameFinishedAtIso: finishedAtIso,
+        ...advancedStats,
+      },
       actions: this.activeSession.actions,
     };
 
@@ -1406,6 +1466,8 @@ class MinesweeperApp {
     this.activeSession ??= this.createActiveSession();
     this.activeSession.statsLocked = true;
     this.activeSession.actions.length = snapshot.actionCount;
+    this.activeSession.totalClicks = snapshot.totalClicks;
+    this.activeSession.effectiveClicks = snapshot.effectiveClicks;
     this.statusOverrideKey = null;
     this.hoveredIndex = null;
     this.trainerOverlayVisible = false;
@@ -1542,6 +1604,7 @@ class MinesweeperApp {
     this.renderZoomControls();
     this.renderSettingsDialog();
     this.renderStatisticsDialog();
+    this.renderAdvancedStatisticsDialog();
     this.renderBestTimesDialog();
   }
 
@@ -1869,6 +1932,113 @@ class MinesweeperApp {
 
     this.populateStatsList(this.currentStatsList, currentBucket ?? null);
     this.populateStatsList(this.overallStatsList, overallBucket);
+  }
+
+  private renderAdvancedStatisticsDialog(): void {
+    const language = this.settings.language;
+    const metrics = computeAdvancedStats(this.game, {
+      totalClicks: this.activeSession?.totalClicks ?? 0,
+      effectiveClicks: this.activeSession?.effectiveClicks ?? 0,
+    });
+
+    this.advancedStatisticsNote.textContent = this.game.minefieldGenerated
+      ? translate(language, "advancedStats.noteReady")
+      : translate(language, "advancedStats.noteWaiting");
+    this.advancedStatsList.replaceChildren();
+
+    const rows: Array<{
+      labelKey: string;
+      tooltipKey: string;
+      value: string;
+    }> = [
+      {
+        labelKey: "advancedStats.cps",
+        tooltipKey: "advancedStats.cpsTip",
+        value: this.formatAdvancedNumber(metrics.cps, 2),
+      },
+      {
+        labelKey: "advancedStats.threeBv",
+        tooltipKey: "advancedStats.threeBvTip",
+        value: this.formatAdvancedInteger(metrics.threeBv),
+      },
+      {
+        labelKey: "advancedStats.threeBvPerSecond",
+        tooltipKey: "advancedStats.threeBvPerSecondTip",
+        value: this.formatAdvancedNumber(metrics.threeBvPerSecond, 2),
+      },
+      {
+        labelKey: "advancedStats.ios",
+        tooltipKey: "advancedStats.iosTip",
+        value: this.formatAdvancedNumber(metrics.ios, 2),
+      },
+      {
+        labelKey: "advancedStats.rqp",
+        tooltipKey: "advancedStats.rqpTip",
+        value: this.formatAdvancedNumber(metrics.rqp, 2),
+      },
+      {
+        labelKey: "advancedStats.ioe",
+        tooltipKey: "advancedStats.ioeTip",
+        value: this.formatAdvancedNumber(metrics.ioe, 2),
+      },
+      {
+        labelKey: "advancedStats.correctness",
+        tooltipKey: "advancedStats.correctnessTip",
+        value: this.formatAdvancedPercent(metrics.correctness),
+      },
+      {
+        labelKey: "advancedStats.throughput",
+        tooltipKey: "advancedStats.throughputTip",
+        value: this.formatAdvancedNumber(metrics.throughput, 2),
+      },
+      {
+        labelKey: "advancedStats.zini",
+        tooltipKey: "advancedStats.ziniTip",
+        value: this.formatAdvancedInteger(metrics.zini),
+      },
+    ];
+
+    for (const row of rows) {
+      const term = document.createElement("dt");
+      const label = document.createElement("span");
+      label.textContent = translate(language, row.labelKey);
+
+      const info = document.createElement("span");
+      info.className = "stat-info";
+      info.textContent = "?";
+      info.title = translate(language, row.tooltipKey);
+      info.setAttribute("aria-label", info.title);
+
+      term.append(label, info);
+
+      const description = document.createElement("dd");
+      description.textContent = row.value;
+      this.advancedStatsList.append(term, description);
+    }
+  }
+
+  private formatAdvancedNumber(value: number | null, fractionDigits: number): string {
+    if (value === null || !Number.isFinite(value)) {
+      return "—";
+    }
+
+    return value.toFixed(fractionDigits);
+  }
+
+  private formatAdvancedInteger(value: number | null): string {
+    if (value === null || !Number.isFinite(value)) {
+      return "—";
+    }
+
+    return String(Math.round(value));
+  }
+
+  private formatAdvancedPercent(value: number | null): string {
+    if (value === null || !Number.isFinite(value)) {
+      return "—";
+    }
+
+    return `${(value * 100).toFixed(1)}%`;
   }
 
   private populateStatsList(container: HTMLElement, bucket: { games: number; wins: number; losses: number; abandoned: number; totalDurationMs: number; fastestWinMs: number | null } | null): void {

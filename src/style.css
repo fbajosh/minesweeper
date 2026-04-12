@@ -1033,6 +1033,10 @@ button {
   background: var(--window-body);
 }
 
+.dialog-card-wide {
+  min-width: min(94vw, 420px);
+}
+
 .dialog-header {
   padding: 8px 10px 4px;
 }
@@ -1084,6 +1088,10 @@ button {
   justify-content: flex-end;
   gap: 8px;
   padding: 0 10px 10px;
+}
+
+.dialog-footer-split {
+  justify-content: space-between;
 }
 
 .dialog-button {
@@ -1145,6 +1153,31 @@ button {
 
 .stats-list dt {
   color: var(--text-muted);
+}
+
+.advanced-stats-list {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.advanced-stats-list dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.stat-info {
+  display: inline-grid;
+  place-items: center;
+  width: 13px;
+  height: 13px;
+  border: 1px solid var(--panel-shadow);
+  border-radius: 50%;
+  color: var(--text-primary);
+  background: var(--surface-raised);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .stats-list dd {

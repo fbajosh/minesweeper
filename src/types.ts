@@ -130,6 +130,7 @@ export interface GameActionRecord {
 export interface GameRecord {
   id: string;
   createdAtIso: string;
+  startedAtIso: string | null;
   finishedAtIso: string;
   config: BoardConfig;
   seed: number;
@@ -138,6 +139,27 @@ export interface GameRecord {
   outcome: GameOutcome;
   durationMs: number;
   moveCount: number;
+  totalClicks: number;
+  effectiveClicks: number;
+  board3BV: number | null;
+  advancedStats: {
+    schemaVersion: 1;
+    gameStartedAtIso: string | null;
+    gameCreatedAtIso: string;
+    gameFinishedAtIso: string;
+    elapsedSeconds: number;
+    totalClicks: number;
+    effectiveClicks: number;
+    cps: number | null;
+    threeBv: number | null;
+    threeBvPerSecond: number | null;
+    ios: number | null;
+    rqp: number | null;
+    ioe: number | null;
+    correctness: number | null;
+    throughput: number | null;
+    zini: number | null;
+  };
   actions: GameActionRecord[];
 }
 
