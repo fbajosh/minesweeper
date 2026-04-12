@@ -76,6 +76,9 @@ const MIN_DESKTOP_BOARD_WIDTH = 400;
 const BUILD_VERSION = import.meta.env.VITE_BUILD_VERSION?.trim() || "dev";
 const BEST_MOVE_EPSILON = 1e-9;
 const APP_MOGGED_URL = "https://appmogged.com/";
+const BOARD_ZOOM_STEP = 1.2;
+const BOARD_ZOOM_MIN_LEVEL = 0;
+const BOARD_ZOOM_MAX_LEVEL = 10;
 
 class MinesweeperApp {
   private settings: AppSettings = readStoredSettings();
@@ -134,6 +137,8 @@ class MinesweeperApp {
 
   private boardScale = 1;
 
+  private boardZoomLevel = 0;
+
   private rotatedBoard = false;
 
   private readonly appWindow = requireElement<HTMLElement>("#app-window");
@@ -167,6 +172,10 @@ class MinesweeperApp {
   private readonly faceButton = requireElement<HTMLButtonElement>("#face-button");
 
   private readonly faceLabel = requireElement<HTMLElement>("#face-button-label");
+
+  private readonly zoomOutButton = requireElement<HTMLButtonElement>("#zoom-out-button");
+
+  private readonly zoomInButton = requireElement<HTMLButtonElement>("#zoom-in-button");
 
   private readonly titleMinimizeButton = requireElement<HTMLButtonElement>("#title-minimize");
 
@@ -274,6 +283,14 @@ class MinesweeperApp {
   }
 
   private bindFaceControls(): void {
+    this.zoomOutButton.addEventListener("click", () => {
+      this.changeBoardZoom(-1);
+    });
+
+    this.zoomInButton.addEventListener("click", () => {
+      this.changeBoardZoom(1);
+    });
+
     this.faceButton.addEventListener("click", () => {
       if (this.settings.trainer.enabled && this.game.status !== "won" && this.game.status !== "lost") {
         return;
@@ -1454,13 +1471,14 @@ class MinesweeperApp {
     const widthScale = availableWidth / fitWidth;
     const heightScale = availableHeight / fitHeight;
     const preferredScale = Math.min(widthScale, heightScale);
-    const scale = Math.max(
+    const baseScale = Math.max(
       0.5,
       Math.min(
         maxScale,
         preferredScale,
       ),
     );
+    const scale = baseScale * BOARD_ZOOM_STEP ** this.boardZoomLevel;
 
     this.boardScale = scale;
 
@@ -1492,15 +1510,44 @@ class MinesweeperApp {
     }
   }
 
+  private changeBoardZoom(delta: number): void {
+    const nextZoomLevel = clampValue(this.boardZoomLevel + delta, BOARD_ZOOM_MIN_LEVEL, BOARD_ZOOM_MAX_LEVEL);
+    if (nextZoomLevel === this.boardZoomLevel) {
+      return;
+    }
+
+    const viewportWidth = this.boardViewport.clientWidth || 1;
+    const viewportHeight = this.boardViewport.clientHeight || 1;
+    const scrollWidth = this.boardViewport.scrollWidth || viewportWidth;
+    const scrollHeight = this.boardViewport.scrollHeight || viewportHeight;
+    const centerXRatio = (this.boardViewport.scrollLeft + viewportWidth / 2) / scrollWidth;
+    const centerYRatio = (this.boardViewport.scrollTop + viewportHeight / 2) / scrollHeight;
+
+    this.boardZoomLevel = nextZoomLevel;
+    this.syncBoardMetrics();
+    this.syncDesktopWindowFrame(false);
+    this.syncBoardMetrics();
+
+    this.boardViewport.scrollLeft = centerXRatio * this.boardViewport.scrollWidth - this.boardViewport.clientWidth / 2;
+    this.boardViewport.scrollTop = centerYRatio * this.boardViewport.scrollHeight - this.boardViewport.clientHeight / 2;
+    this.renderZoomControls();
+  }
+
   private renderAll(): void {
     this.renderMenuState();
     this.renderStatus();
     this.renderScoreboard();
     this.renderBoard();
     this.renderTrainerMeta();
+    this.renderZoomControls();
     this.renderSettingsDialog();
     this.renderStatisticsDialog();
     this.renderBestTimesDialog();
+  }
+
+  private renderZoomControls(): void {
+    this.zoomOutButton.disabled = this.boardZoomLevel <= BOARD_ZOOM_MIN_LEVEL;
+    this.zoomInButton.disabled = this.boardZoomLevel >= BOARD_ZOOM_MAX_LEVEL;
   }
 
   private renderScoreboard(): void {

@@ -574,7 +574,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
+  gap: 8px;
   width: 100%;
   padding: 5px 6px;
 }
@@ -637,6 +637,14 @@ button {
   transform: none;
 }
 
+.score-controls {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
 .face-button {
   width: 36px;
   height: 36px;
@@ -658,6 +666,10 @@ button {
   border-left-color: var(--surface-raised-dark);
   border-right-color: var(--surface-raised-light);
   border-bottom-color: var(--surface-raised-light);
+}
+
+.face-button:disabled {
+  opacity: 0.45;
 }
 
 .face-button-label {
@@ -704,6 +716,18 @@ button {
   border-radius: 0;
   background: center / contain no-repeat url("./assets/images/eye.svg");
   box-shadow: none;
+}
+
+.zoom-button-icon {
+  display: block;
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.zoom-button {
+  display: none;
 }
 
 .board-stage {
@@ -1151,6 +1175,10 @@ button {
     width: calc(100vw - 4px);
     max-width: calc(100vw - 4px);
     margin: 0 auto;
+  }
+
+  .zoom-button {
+    display: inline-flex;
   }
 }
 
