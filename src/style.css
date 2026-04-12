@@ -123,6 +123,8 @@
   --trainer-zero: rgba(132, 206, 255, 0.7);
   --trainer-certain: rgba(120, 0, 0, 0.82);
   --trainer-text: #111111;
+  --field-bg: #ffffff;
+  --field-text: #111111;
   --surface-raised: #c0c0c0;
   --surface-raised-dark: #808080;
   --surface-raised-light: #ffffff;
@@ -161,6 +163,14 @@ body {
 :root[data-theme="mogged"] body {
   background-image: none;
   background-color: #080808;
+}
+
+:root[data-theme="xp-olive"] body {
+  --app-background-image: url("./assets/images/olive-bg.jpg");
+}
+
+:root[data-theme="xp-silver"] body {
+  --app-background-image: url("./assets/images/silver-bg.jpg");
 }
 
 :root[data-theme="astronomer"] body {
@@ -1037,6 +1047,7 @@ button {
     inset -1px -1px 0 var(--panel-shadow),
     3px 3px 16px rgba(0, 0, 0, 0.25);
   background: var(--window-body);
+  color: var(--text-primary);
 }
 
 .dialog-card-wide {
@@ -1085,8 +1096,14 @@ button {
   border-left: 2px solid var(--surface-sunken);
   border-right: 2px solid var(--surface-sunken-light);
   border-bottom: 2px solid var(--surface-sunken-light);
-  background: #ffffff;
+  background: var(--field-bg);
+  color: var(--field-text);
   padding: 1px 6px;
+}
+
+.dialog-card input[type="range"],
+.dialog-card input[type="checkbox"] {
+  accent-color: var(--titlebar-mid);
 }
 
 .dialog-footer {
