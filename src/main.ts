@@ -735,12 +735,33 @@ class MinesweeperApp {
 
   private syncDesktopWindowFrame(recenter: boolean): void {
     const desktopMode = this.isDesktopWindowMode();
-    this.appWindow.classList.toggle("is-floating-window", desktopMode);
+    this.appWindow.classList.add("is-floating-window");
+    this.appWindow.classList.toggle("is-resizable-window", desktopMode);
 
     if (!desktopMode) {
-      this.appWindow.style.width = "";
-      this.appWindow.style.left = "";
-      this.appWindow.style.top = "";
+      const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
+      const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+      const mobileInset = 2;
+      const mobileWidth = Math.max(240, Math.floor(viewportWidth - mobileInset * 2));
+      this.appWindow.style.width = `${mobileWidth}px`;
+
+      const titleBarHeight = Math.max(29, Math.ceil(this.titleBar.getBoundingClientRect().height));
+      const visibleGrip = titleBarHeight;
+      const minLeft = Math.min(mobileInset, visibleGrip - mobileWidth);
+      const maxLeft = Math.max(mobileInset, viewportWidth - visibleGrip);
+      const minTop = mobileInset;
+      const maxTop = Math.max(mobileInset, viewportHeight - titleBarHeight - mobileInset);
+
+      if (recenter) {
+        this.windowLeft = Math.round((viewportWidth - mobileWidth) / 2);
+        this.windowTop = mobileInset;
+      } else {
+        this.windowLeft = clampValue(this.windowLeft, minLeft, maxLeft);
+        this.windowTop = clampValue(this.windowTop, minTop, maxTop);
+      }
+
+      this.appWindow.style.left = `${Math.round(this.windowLeft)}px`;
+      this.appWindow.style.top = `${Math.round(this.windowTop)}px`;
       return;
     }
 
@@ -772,7 +793,7 @@ class MinesweeperApp {
   }
 
   private handleWindowDragStart(event: PointerEvent): void {
-    if (!this.isDesktopWindowMode() || event.pointerType !== "mouse" || event.button !== 0) {
+    if (!this.appWindow.classList.contains("is-floating-window") || (event.pointerType === "mouse" && event.button !== 0)) {
       return;
     }
 

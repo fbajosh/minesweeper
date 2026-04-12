@@ -239,6 +239,7 @@ button {
 
 .xp-window.is-floating-window .title-bar {
   cursor: move;
+  touch-action: none;
 }
 
 .title-bar::before {
@@ -971,7 +972,7 @@ button {
   display: none;
 }
 
-.xp-window.is-floating-window .window-resize-handle {
+.xp-window.is-resizable-window .window-resize-handle {
   display: block;
   position: absolute;
   right: 0;
@@ -984,7 +985,7 @@ button {
   opacity: 0;
 }
 
-.xp-window.is-floating-window .window-resize-handle::before {
+.xp-window.is-resizable-window .window-resize-handle::before {
   display: none;
 }
 
