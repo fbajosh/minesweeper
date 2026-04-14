@@ -386,6 +386,7 @@ class MinesweeperApp {
     this.titleMaximizeButton.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
+      this.maximizeWindow();
     });
 
     this.titleCloseButton.addEventListener("click", (event) => {
@@ -840,6 +841,52 @@ class MinesweeperApp {
 
   private isDesktopWindowMode(): boolean {
     return window.innerWidth > 640;
+  }
+
+  private maximizeWindow(): void {
+    this.closeMenus();
+    this.clearWindowPointerSessions();
+
+    if (this.isDesktopWindowMode()) {
+      const minWidth = this.getMinimumDesktopWindowWidth();
+      this.desktopWindowWidth = this.getMaximumDesktopWindowWidth(minWidth);
+      this.syncDesktopWindowFrame(true);
+      this.syncBoardMetrics();
+      this.renderAll();
+      return;
+    }
+
+    this.requestMobileFullscreen();
+    this.syncDesktopWindowFrame(true);
+    this.syncBoardMetrics();
+    this.renderAll();
+  }
+
+  private requestMobileFullscreen(): void {
+    const fullscreenDocument = document as Document & {
+      webkitFullscreenElement?: Element | null;
+    };
+    const fullscreenTarget = document.documentElement as HTMLElement & {
+      webkitRequestFullscreen?: () => Promise<void> | void;
+    };
+
+    if (document.fullscreenElement || fullscreenDocument.webkitFullscreenElement) {
+      return;
+    }
+
+    const requestFullscreen =
+      fullscreenTarget.requestFullscreen?.bind(fullscreenTarget) ?? fullscreenTarget.webkitRequestFullscreen?.bind(fullscreenTarget);
+    if (!requestFullscreen) {
+      return;
+    }
+
+    void Promise.resolve(requestFullscreen())
+      .then(() => {
+        this.syncDesktopWindowFrame(true);
+        this.syncBoardMetrics();
+        this.renderAll();
+      })
+      .catch(() => undefined);
   }
 
   private getDesktopWindowInsets(): { horizontal: number; top: number; bottom: number } {
