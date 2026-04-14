@@ -131,6 +131,14 @@ class MinesweeperApp {
 
   private trainerOverlayVisible = false;
 
+  private trainerOverlayLatched = false;
+
+  private trainerUseCount = 0;
+
+  private trainerActionSerial = 0;
+
+  private lastTrainerUseActionSerial = -1;
+
   private counterMarquee: CounterMarquee | null = null;
 
   private windowDragSession: WindowDragSession | null = null;
@@ -180,6 +188,14 @@ class MinesweeperApp {
   private readonly timerCounterDisplay = requireElement<HTMLElement>("#timer-counter-display");
 
   private readonly timerCounterUnderlay = requireElement<HTMLElement>("#timer-counter-underlay");
+
+  private readonly trainerUseCounterWrap = requireElement<HTMLElement>("#trainer-use-counter-wrap");
+
+  private readonly trainerUseCounter = requireElement<HTMLElement>("#trainer-use-counter");
+
+  private readonly trainerUseCounterDisplay = requireElement<HTMLElement>("#trainer-use-counter-display");
+
+  private readonly trainerUseCounterUnderlay = requireElement<HTMLElement>("#trainer-use-counter-underlay");
 
   private readonly faceButton = requireElement<HTMLButtonElement>("#face-button");
 
@@ -321,6 +337,16 @@ class MinesweeperApp {
       this.newGame(this.config);
     });
 
+    this.faceButton.addEventListener("dblclick", (event) => {
+      if (!this.settings.trainer.enabled || this.game.status === "won" || this.game.status === "lost") {
+        return;
+      }
+
+      event.preventDefault();
+      this.trainerOverlayLatched = true;
+      this.setTrainerOverlayVisible(true);
+    });
+
     this.faceButton.addEventListener("pointerdown", () => {
       this.faceButton.classList.add("is-pressed");
       if (this.settings.trainer.enabled && this.game.status !== "won" && this.game.status !== "lost") {
@@ -330,17 +356,23 @@ class MinesweeperApp {
 
     this.faceButton.addEventListener("pointerup", () => {
       this.faceButton.classList.remove("is-pressed");
-      this.setTrainerOverlayVisible(false);
+      if (!this.trainerOverlayLatched) {
+        this.setTrainerOverlayVisible(false);
+      }
     });
 
     this.faceButton.addEventListener("pointercancel", () => {
       this.faceButton.classList.remove("is-pressed");
-      this.setTrainerOverlayVisible(false);
+      if (!this.trainerOverlayLatched) {
+        this.setTrainerOverlayVisible(false);
+      }
     });
 
     this.faceButton.addEventListener("pointerleave", () => {
       this.faceButton.classList.remove("is-pressed");
-      this.setTrainerOverlayVisible(false);
+      if (!this.trainerOverlayLatched) {
+        this.setTrainerOverlayVisible(false);
+      }
     });
   }
 
@@ -682,6 +714,7 @@ class MinesweeperApp {
     if (action === "toggle-trainer") {
       this.settings.trainer.enabled = !this.settings.trainer.enabled;
       this.trainerOverlayVisible = false;
+      this.trainerOverlayLatched = false;
       this.persistSettings();
       this.refreshTrainerModel();
       this.renderAll();
@@ -1272,6 +1305,7 @@ class MinesweeperApp {
     pointerType: PointerKind,
   ): void {
     this.clearCounterMarquee();
+    this.markBoardActionPlayed();
     const undoSnapshot: UndoSnapshot = {
       game: cloneGameState(this.game),
       actionCount: this.activeSession?.actions.length ?? 0,
@@ -1304,7 +1338,6 @@ class MinesweeperApp {
 
     this.recordEffectiveClick();
     this.undoStack.push(undoSnapshot);
-    this.trainerOverlayVisible = false;
     this.logAction(actionType, gesture, pointerType, index, changedIndices, now);
     this.refreshTrainerModel();
     this.playActionSound(actionType, index, undoSnapshot.game);
@@ -1315,6 +1348,12 @@ class MinesweeperApp {
       this.startCounterMarquee(this.game.status === "won" ? "NIIICE" : "BOOOOM");
     }
     this.renderAll();
+  }
+
+  private markBoardActionPlayed(): void {
+    this.trainerActionSerial += 1;
+    this.trainerOverlayLatched = false;
+    this.trainerOverlayVisible = false;
   }
 
   private recordClickAttempt(): void {
@@ -1480,6 +1519,10 @@ class MinesweeperApp {
     this.statusOverrideKey = null;
     this.hoveredIndex = null;
     this.trainerOverlayVisible = false;
+    this.trainerOverlayLatched = false;
+    this.trainerUseCount = 0;
+    this.trainerActionSerial = 0;
+    this.lastTrainerUseActionSerial = -1;
     this.startCounterMarquee("SEE!YA");
     this.boardViewport.scrollTo({ left: 0, top: 0 });
     this.rebuildBoard();
@@ -1698,6 +1741,10 @@ class MinesweeperApp {
   private renderScoreboard(): void {
     const marqueeFrame = this.getCounterMarqueeFrame(Date.now());
     const usingUndoneFaces = Boolean(this.activeSession?.statsLocked);
+    this.trainerUseCounterWrap.hidden = !this.settings.trainer.enabled;
+    this.trainerUseCounterDisplay.classList.remove("is-marquee");
+    this.trainerUseCounterUnderlay.textContent = "888";
+    this.trainerUseCounter.textContent = formatCounter(this.trainerUseCount);
 
     if (marqueeFrame) {
       this.mineCounterDisplay.classList.add("is-marquee");
@@ -2245,8 +2292,13 @@ class MinesweeperApp {
   }
 
   private setTrainerOverlayVisible(visible: boolean): void {
-    if (!this.settings.trainer.enabled || this.game.status === "won" || this.game.status === "lost") {
+    if (!this.isTrainerOverlayAvailable()) {
       visible = false;
+      this.trainerOverlayLatched = false;
+    }
+
+    if (visible) {
+      this.recordTrainerUse();
     }
 
     if (this.trainerOverlayVisible === visible) {
@@ -2256,6 +2308,23 @@ class MinesweeperApp {
     this.trainerOverlayVisible = visible;
     this.refreshTrainerModel();
     this.renderAll();
+  }
+
+  private isTrainerOverlayAvailable(): boolean {
+    return this.settings.trainer.enabled && this.game.status !== "won" && this.game.status !== "lost";
+  }
+
+  private recordTrainerUse(): void {
+    if (!this.isTrainerOverlayAvailable()) {
+      return;
+    }
+
+    if (this.lastTrainerUseActionSerial === this.trainerActionSerial) {
+      return;
+    }
+
+    this.lastTrainerUseActionSerial = this.trainerActionSerial;
+    this.trainerUseCount += 1;
   }
 
   private setHoveredIndex(index: number | null): void {
