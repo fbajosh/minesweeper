@@ -81,6 +81,17 @@ const BOARD_ZOOM_STEP = 1.2;
 const BOARD_ZOOM_MIN_LEVEL = 0;
 const BOARD_ZOOM_MAX_LEVEL = 10;
 
+function registerServiceWorker(): void {
+  if (!import.meta.env.PROD || !("serviceWorker" in navigator)) {
+    return;
+  }
+
+  const baseUrl = import.meta.env.BASE_URL;
+  window.addEventListener("load", () => {
+    void navigator.serviceWorker.register(`${baseUrl}sw.js`, { scope: baseUrl }).catch(() => undefined);
+  });
+}
+
 class MinesweeperApp {
   private settings: AppSettings = readStoredSettings();
 
@@ -2308,3 +2319,4 @@ class MinesweeperApp {
 }
 
 new MinesweeperApp().init();
+registerServiceWorker();

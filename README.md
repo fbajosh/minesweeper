@@ -17,6 +17,7 @@ This project aims to stay visually and behaviorally close to classic Microsoft M
 - action-based sound effects
 - theme support
 - language support
+- PWA/home-screen install support
 
 The app is built as a static Vite site and deployed to a GCP-hosted VM via GitHub Actions.
 
@@ -115,9 +116,20 @@ Stats are only counted for clean runs:
 
 - TypeScript
 - Vite
+- Web App Manifest and service worker for PWA install/offline shell support
 - static asset-based XP UI styling
 - localStorage for settings and summary stats
 - IndexedDB for detailed game history
+
+## PWA
+
+The app is installable from supported browsers as a standalone home-screen app.
+
+- manifest: [`src/public/manifest.webmanifest`](./src/public/manifest.webmanifest)
+- service worker: [`src/public/sw.js`](./src/public/sw.js)
+- fixed install icons: [`src/public/pwa`](./src/public/pwa)
+
+The service worker is registered only in production builds and is scoped to the configured Vite base path, `/minesweeper/`.
 
 ## Local Development
 
