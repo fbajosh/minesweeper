@@ -703,6 +703,11 @@ class MinesweeperApp {
       return;
     }
 
+    if (action === "refresh-app") {
+      this.refreshApp();
+      return;
+    }
+
     if (action === "exit-app") {
       this.closeMenus();
       window.location.assign(APP_MOGGED_URL);
@@ -732,6 +737,72 @@ class MinesweeperApp {
       this.closeMenus();
       window.open(APP_MOGGED_URL, "_blank", "noopener,noreferrer");
     }
+  }
+
+  private refreshApp(): void {
+    this.closeMenus();
+
+    const reload = () => window.location.reload();
+    let reloaded = false;
+    const reloadOnce = () => {
+      if (reloaded) {
+        return;
+      }
+      reloaded = true;
+      reload();
+    };
+
+    const activateWaitingWorker = (registration: ServiceWorkerRegistration) => {
+      if (!registration.waiting) {
+        return false;
+      }
+
+      navigator.serviceWorker.addEventListener("controllerchange", reloadOnce, { once: true });
+      registration.waiting.postMessage({ type: "SKIP_WAITING" });
+      window.setTimeout(reloadOnce, 1200);
+      return true;
+    };
+
+    if (!("serviceWorker" in navigator)) {
+      reload();
+      return;
+    }
+
+    void navigator.serviceWorker
+      .getRegistration(import.meta.env.BASE_URL)
+      .then(async (registration) => {
+        if (!registration) {
+          reload();
+          return;
+        }
+
+        await registration.update();
+
+        if (activateWaitingWorker(registration)) {
+          return;
+        }
+
+        if (registration.installing) {
+          registration.installing.addEventListener(
+            "statechange",
+            () => {
+              if (activateWaitingWorker(registration)) {
+                return;
+              }
+
+              if (registration.installing?.state === "activated") {
+                reloadOnce();
+              }
+            },
+            { once: true },
+          );
+          window.setTimeout(reloadOnce, 3000);
+          return;
+        }
+
+        reload();
+      })
+      .catch(reload);
   }
 
   private isDesktopWindowMode(): boolean {
