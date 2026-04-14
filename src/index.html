@@ -134,6 +134,7 @@
                   Additional settings...
                 </button>
                 <div class="menu-separator"></div>
+                <button class="menu-entry" data-menu-action="refresh-app" type="button" data-i18n="menu.refresh">Refresh</button>
                 <button class="menu-entry" data-menu-action="exit-app" type="button" data-i18n="menu.exit">Exit</button>
               </div>
             </div>
@@ -176,12 +177,20 @@
               </div>
 
               <div class="score-controls">
-                <button class="face-button zoom-button" id="zoom-out-button" type="button" aria-label="Zoom out" data-i18n-aria-label="controls.zoomOut">
-                  <img class="zoom-button-icon" src="./assets/images/zoom-out.svg" alt="" aria-hidden="true" />
-                </button>
+                <div class="counter-wrap trainer-use-counter-wrap" id="trainer-use-counter-wrap" hidden>
+                  <span class="visually-hidden" data-i18n="controls.trainerUses">Trainer uses</span>
+                  <div class="counter-display" id="trainer-use-counter-display" aria-live="polite">
+                    <span class="counter-display-underlay" id="trainer-use-counter-underlay" aria-hidden="true">888</span>
+                    <span class="counter-display-value" id="trainer-use-counter">000</span>
+                  </div>
+                </div>
 
                 <button class="face-button" id="face-button" type="button" aria-label="Restart" data-i18n-aria-label="controls.restart">
                   <span class="face-button-label" id="face-button-label" aria-hidden="true">:)</span>
+                </button>
+
+                <button class="face-button zoom-button" id="zoom-out-button" type="button" aria-label="Zoom out" data-i18n-aria-label="controls.zoomOut">
+                  <img class="zoom-button-icon" src="./assets/images/zoom-out.svg" alt="" aria-hidden="true" />
                 </button>
 
                 <button class="face-button zoom-button" id="zoom-in-button" type="button" aria-label="Zoom in" data-i18n-aria-label="controls.zoomIn">

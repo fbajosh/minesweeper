@@ -1,19 +1,15 @@
-const CACHE_NAME = "minesweeper-trainer-v1";
-const APP_SHELL_URLS = [
-  "./",
-  "./manifest.webmanifest",
-  "./pwa/apple-touch-icon.png",
-  "./pwa/icon-192.png",
-  "./pwa/icon-512.png",
-];
+const CACHE_VERSION = "__CACHE_VERSION__";
+const CACHE_NAME = `minesweeper-trainer-${CACHE_VERSION}`;
+const PRECACHE_URLS = __PRECACHE_URLS__;
 
 const toScopedUrl = (path) => new URL(path, self.registration.scope).toString();
+const scopePath = new URL(self.registration.scope).pathname;
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(CACHE_NAME)
-      .then((cache) => cache.addAll(APP_SHELL_URLS.map(toScopedUrl)))
+      .then((cache) => cache.addAll(PRECACHE_URLS.map(toScopedUrl)))
       .then(() => self.skipWaiting()),
   );
 });
@@ -31,7 +27,7 @@ self.addEventListener("fetch", (event) => {
   const request = event.request;
   const url = new URL(request.url);
 
-  if (request.method !== "GET" || url.origin !== self.location.origin) {
+  if (request.method !== "GET" || url.origin !== self.location.origin || !url.pathname.startsWith(scopePath)) {
     return;
   }
 
@@ -63,4 +59,10 @@ self.addEventListener("fetch", (event) => {
       });
     }),
   );
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });

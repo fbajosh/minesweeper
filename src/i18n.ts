@@ -34,6 +34,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       about: "About Minesweeper",
       credits: "Credits",
       appmogged: "Appmogged",
+      refresh: "Refresh",
       exit: "Exit",
     },
     difficulty: {
@@ -76,6 +77,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       time: "Time",
       difficulty: "Difficulty",
       trainer: "Trainer",
+      trainerUses: "Trainer uses",
       on: "On",
       off: "Off",
       remainingMines: "{count} mines remaining",
@@ -199,6 +201,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       about: "Acerca de Buscaminas",
       credits: "Creditos",
       appmogged: "Appmogged",
+      refresh: "Actualizar",
       exit: "Salir",
     },
     difficulty: {
@@ -241,6 +244,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       time: "Tiempo",
       difficulty: "Dificultad",
       trainer: "Entrenador",
+      trainerUses: "Usos del entrenador",
       on: "Activado",
       off: "Desactivado",
       remainingMines: "{count} minas restantes",
@@ -364,6 +368,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       about: "Sobre o Campo Minado",
       credits: "Creditos",
       appmogged: "Appmogged",
+      refresh: "Atualizar",
       exit: "Sair",
     },
     difficulty: {
@@ -406,6 +411,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationNode> = {
       time: "Tempo",
       difficulty: "Dificuldade",
       trainer: "Trainer",
+      trainerUses: "Usos do trainer",
       on: "Ligado",
       off: "Desligado",
       remainingMines: "{count} minas restantes",
